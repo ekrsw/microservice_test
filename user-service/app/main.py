@@ -39,8 +39,8 @@ async def lifespan(app: FastAPI):
 
 # FastAPIアプリケーションの作成
 app = FastAPI(
-    title="認証サービス",
-    description="ユーザー認証とトークン管理を提供するマイクロサービス",
+    title="ユーザーサービス",
+    description="ユーザー管理機能を提供するマイクロサービス",
     version="1.0.0",
     lifespan=lifespan
 )
@@ -138,7 +138,7 @@ app.include_router(api_router, prefix="/api/v1")
 @app.get("/")
 async def root():
     return {
-        "message": "認証サービスAPI",
+        "message": "ユーザーサービスAPI",
         "version": "1.0.0",
         "docs_url": "/docs"
     }
@@ -153,7 +153,7 @@ if __name__ == "__main__":
     
     # アプリケーション起動時のログ
     app_logger.info(
-        f"Starting auth-service in {settings.ENVIRONMENT} mode "
+        f"Starting user-service in {settings.ENVIRONMENT} mode "
         f"(Log level: {settings.LOG_LEVEL})"
     )
     

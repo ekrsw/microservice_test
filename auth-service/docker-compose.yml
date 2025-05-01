@@ -12,11 +12,11 @@ services:
       POSTGRES_INITDB_ARGS: --encoding=UTF-8
       TZ: ${TZ}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - auth_user_data:/var/lib/postgresql/data
     ports:
-      - "${AUTH_POSTGRES_EXTERNAL_PORT}:5432"
+      - "${AUTH_POSTGRES_EXTERNAL_PORT}:${AUTH_POSTGRES_PORT}"
     expose:
-      - "5432"
+      - "${AUTH_POSTGRES_PORT}"
     networks:
       - auth-network
   auth_redis:
@@ -37,5 +37,5 @@ networks:
     name: auth-network
     driver: bridge
 volumes:
-  postgres_data:
+  auth_user_data:
   auth_redis_data:

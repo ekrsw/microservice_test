@@ -1,0 +1,21 @@
+services:
+  knowledge_db:
+    image: postgres:17.4-alpine
+    container_name: knowledge-db
+    restart: always
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${KNOWLEDGE_POSTGRES_DB}
+      POSTGRES_KNOWLEDGE: ${KNOWLEDGE_POSTGRES_KNOWLEDGE}
+      POSTGRES_PASSWORD: ${KNOWLEDGE_POSTGRES_PASSWORD}
+      POSTGRES_INITDB_ARGS: --encoding=UTF-8
+      TZ: ${TZ}
+    volumes:
+      - knowledge_data:/var/lib/postgresql/data
+    ports:
+      - "${KNOWLEDGE_POSTGRES_EXTERNAL_PORT}:${KNOWLEDGE_POSTGRES_PORT}"
+    expose:
+      - "${KNOWLEDGE_POSTGRES_PORT}"
+    networks:
+      - knowledge-network

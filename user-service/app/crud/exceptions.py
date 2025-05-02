@@ -29,3 +29,8 @@ class DatabaseQueryError(Exception):
     def __init__(self, message: str = "Database query execution error"):
         self.message = message
         super().__init__(self.message)
+
+class DuplicateGroupNameError(DuplicateResourceError):
+    """グループ名の重複エラー"""
+    def __init__(self, field: str = None, value = None, message: str = None):
+        super().__init__("Group", field, value, message)

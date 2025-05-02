@@ -108,3 +108,5 @@ class CRUDUser:
             self.logger.warning(f"User with id {id} not found")
             raise UserNotFoundError(user_id=id)
         return user
+
+user_crud = CRUDUser()

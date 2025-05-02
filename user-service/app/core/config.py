@@ -15,7 +15,7 @@ class Settings(BaseSettings):
 
      # データベース関係
     USER_POSTGRES_HOST: str
-    USER_POSTGRES_PORT: str
+    USER_POSTGRES_INTERNAL_PORT: str = "5432"
     USER_POSTGRES_USER: str
     USER_POSTGRES_PASSWORD: str
     USER_POSTGRES_DB: str
@@ -36,7 +36,7 @@ class Settings(BaseSettings):
         return (
             f"postgresql+asyncpg://"
             f"{self.USER_POSTGRES_USER}:{self.USER_POSTGRES_PASSWORD}@"
-            f"{self.USER_POSTGRES_HOST}:{self.USER_POSTGRES_PORT}/"
+            f"{self.USER_POSTGRES_HOST}:{self.USER_POSTGRES_INTERNAL_PORT}/"
             f"{self.USER_POSTGRES_DB}"
         )
     

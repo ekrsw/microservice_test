@@ -1,0 +1,6 @@
+include:
+  - path: ./auth-service/docker-compose.yml
+networks:
+  microservice-network:
+    name: "${COMMON_NETWORK:-microservice-network}"
+    driver: bridge

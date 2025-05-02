@@ -93,7 +93,7 @@ async def login(
     )
     
     # リフレッシュトークン生成
-    refresh_token = await create_refresh_token(user_id=str(db_user.id))
+    refresh_token = await create_refresh_token(auth_user_id=str(db_user.id))
 
     logger.info(f"ログイン成功: ユーザーID={db_user.id}, ユーザー名={db_user.username}")
 
@@ -181,7 +181,7 @@ async def refresh_token(
         try:
             # リフレッシュトークンの検証
             try:
-                user_id = await verify_refresh_token(token_data.refresh_token)
+                auth_user_id = await verify_refresh_token(token_data.refresh_token)
             except jwt.JWTError as e:
                 logger.warning(f"リフレッシュトークン検証失敗: JWT形式エラー: {str(e)}")
                 raise HTTPException(
@@ -199,9 +199,9 @@ async def refresh_token(
             
             # ユーザーの情報を取得
             try:
-                db_user = await auth_user_crud.get_by_id(async_session, user_id)
+                db_user = await auth_user_crud.get_by_id(async_session, auth_user_id)
             except UserNotFoundError:
-                logger.warning(f"ユーザー情報取得失敗: ユーザーが見つかりません: {user_id}")
+                logger.warning(f"ユーザー情報取得失敗: ユーザーが見つかりません: {auth_user_id}")
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="ユーザーが見つかりません",
@@ -240,7 +240,7 @@ async def refresh_token(
             )
 
             # 新しいリフレッシュトークンを生成
-            new_refresh_token = await create_refresh_token(user_id=str(db_user.id))
+            new_refresh_token = await create_refresh_token(auth_user_id=str(db_user.id))
             if not new_refresh_token:
                 logger.warning("新しいリフレッシュトークンの生成に失敗")
                 raise HTTPException(
@@ -279,12 +279,14 @@ async def get_user_me(current_user: AuthUserResponse = Depends(get_current_user)
     """
     return current_user
 
-@router.put("/users/{user_id}")
-async def update_user(user_id: uuid.UUID,
+@router.patch("/update/{auth_user_id}")
+
+@router.put("/users/{auth_user_id}")
+async def update_user(auth_user_id: uuid.UUID,
                       user_update: AuthUserUpdate,
                       async_session: AsyncSession = Depends(get_async_session)):
     try:
-        updated_user = await auth_user_crud.update_by_id(async_session, user_id, user_update)
+        updated_user = await auth_user_crud.update_by_id(async_session, auth_user_id, user_update)
         return updated_user
     except UserNotFoundError:
         raise HTTPException(status_code=404, detail="User not found")

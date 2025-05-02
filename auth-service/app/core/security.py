@@ -133,12 +133,12 @@ async def verify_token(token: str) -> Optional[Dict[str, Any]]:
     except JWTError:
         return None
 
-async def create_refresh_token(user_id: str) -> str:
+async def create_refresh_token(auth_user_id: str) -> str:
     """
     リフレッシュトークンを作成し、Redisに保存する関数
     
     Args:
-        user_id: ユーザーID
+        auth_user_id: ユーザーID
         
     Returns:
         str: 生成されたリフレッシュトークン
@@ -152,7 +152,7 @@ async def create_refresh_token(user_id: str) -> str:
     
     # トークンデータをJSON形式で保存
     token_data = {
-        "user_id": user_id,
+        "auth_user_id": auth_user_id,
         "expires_at": expiry_timestamp
     }
     
@@ -204,7 +204,7 @@ async def verify_refresh_token(token: str) -> Optional[str]:
             await revoke_refresh_token(token)
             raise jwt.JWTError("リフレッシュトークンの有効期限が切れています")
         
-        return token_data.get("user_id")
+        return token_data.get("auth_user_id")
     except json.JSONDecodeError:
         app_logger.error(f"リフレッシュトークンのデータ形式が不正: {token_data_str}")
         return None

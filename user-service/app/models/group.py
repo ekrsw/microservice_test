@@ -10,4 +10,4 @@ class Group(Base):
 
     group_name: Mapped[str] = mapped_column(String, nullable=False, unique=True, index=True)
 
-    user: Mapped[list["User"]] = relationship(back_populates="group")
+    user: Mapped[list["User"]] = relationship(back_populates="groups")

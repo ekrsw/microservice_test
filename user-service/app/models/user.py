@@ -18,4 +18,4 @@ class User(Base):
     sweet_name: Mapped[Optional[str]] = mapped_column(String, nullable=True, index=True)
     group_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("groups.id"), nullable=False)
 
-    groups: Mapped[list["Group"]] = relationship()
+    groups: Mapped[list["Group"]] = relationship(back_populates="user")

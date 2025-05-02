@@ -1,5 +1,5 @@
 services:
-  auth_service:
+  auth-service:
     container_name: auth-service
     build:
       context: .
@@ -8,9 +8,9 @@ services:
     env_file:
       - .env
     depends_on:
-      auth_db:
+      auth-db:
         condition: service_healthy
-      auth_redis:
+      auth-redis:
         condition: service_started
     ports:
       - "${AUTH_SERVICE_EXTERNAL_PORT:-8080}:${AUTH_SERVICE_INTERNAL_PORT:-8080}"
@@ -31,7 +31,7 @@ services:
         reservations:
           cpus: '0.25'
           memory: 256M
-  auth_db:
+  auth-db:
     image: postgres:17.4-alpine
     container_name: auth-db
     restart: always
@@ -57,7 +57,7 @@ services:
       - "${AUTH_POSTGRES_INTERNAL_PORT:-5432}"
     networks:
       - auth-network
-  auth_redis:
+  auth-redis:
     image: redis:7.4.2-alpine
     container_name: auth-redis
     restart: always

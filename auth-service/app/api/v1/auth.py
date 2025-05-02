@@ -279,8 +279,6 @@ async def get_user_me(current_user: AuthUserResponse = Depends(get_current_user)
     """
     return current_user
 
-@router.patch("/update/{auth_user_id}")
-
 @router.put("/users/{auth_user_id}")
 async def update_user(auth_user_id: uuid.UUID,
                       user_update: AuthUserUpdate,

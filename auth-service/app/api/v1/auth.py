@@ -18,7 +18,11 @@ from app.core.security import (
     verify_password,
     )
 from app.crud.auth_user import auth_user_crud
-from app.crud.exceptions import UserNotFoundError, DuplicateUsernameError
+from app.crud.exceptions import (
+    UserNotFoundError,
+    DuplicateEmailError,
+    DuplicateUsernameError
+    )
 from app.db.session import get_async_session
 from app.schemas.auth_user import (
     AuthUserCreate,
@@ -44,6 +48,9 @@ async def register_auth_user(
     try:
         new_user = await auth_user_crud.create(async_session, user_in)
         logger.info(f"ユーザー登録成功: {new_user.username}")
+    except DuplicateEmailError:
+        logger.error(f"ユーザー登録失敗: メールアドレスが重複しています: {user_in.email}")
+        raise HTTPException(status_code=400, detail="Email already exists")
     except DuplicateUsernameError:
         logger.error(f"ユーザー登録失敗: ユーザー名が重複しています: {user_in.username}")
         raise HTTPException(status_code=400, detail="Username already exists")

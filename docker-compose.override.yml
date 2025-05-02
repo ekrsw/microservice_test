@@ -2,7 +2,6 @@ services:
   auth-service:
     networks:
       - microservice-network
-
 networks:
   microservice-network:
     name: "${COMMON_NETWORK:-microservice-network}"

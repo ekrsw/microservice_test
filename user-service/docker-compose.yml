@@ -1,4 +1,34 @@
 services:
+  user-service:
+    container_name: user-service
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      user-db:
+        condition: service_healthy
+    ports:
+      - "${USER_SERVICE_EXTERNAL_PORT:-8081}:${USER_SERVICE_INTERNAL_PORT:-8080}"
+    expose:
+      - "${USER_SERVICE_INTERNAL_PORT:-8080}"
+    volumes:
+      - ./app:/workdir/app
+      - ./alembic:/workdir/alembic
+      - ./alembic.ini:/workdir/alembic.ini
+      - ./tests:/workdir/tests
+    networks:
+      - user-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
   user_db:
     image: postgres:17.4-alpine
     container_name: user-db
@@ -11,6 +41,12 @@ services:
       POSTGRES_PASSWORD: ${USER_POSTGRES_PASSWORD}
       POSTGRES_INITDB_ARGS: --encoding=UTF-8
       TZ: ${TZ}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${AUTH_POSTGRES_USER} -d ${AUTH_POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     volumes:
       - user_data:/var/lib/postgresql/data
     ports:

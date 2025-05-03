@@ -15,6 +15,6 @@ class User(Base):
     is_supervisor: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     ctstage_name: Mapped[Optional[str]] = mapped_column(String, nullable=True, index=True)
     sweet_name: Mapped[Optional[str]] = mapped_column(String, nullable=True, index=True)
-    group_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("groups.id"), nullable=False)
+    group_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("groups.id"), nullable=True)
 
     groups: Mapped["Group"] = relationship(back_populates="user")

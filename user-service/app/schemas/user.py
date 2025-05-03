@@ -1,4 +1,5 @@
 from typing import Optional
+import uuid
 from pydantic import BaseModel, EmailStr
 
 class UserBase(BaseModel):
@@ -12,3 +13,4 @@ class UserCreate(BaseModel):
     is_supervisor: Optional[bool] = False
     ctstage_name: Optional[str] = None
     sweet_name: Optional[str] = None
+    group_id: Optional[uuid.UUID] = None

@@ -22,10 +22,18 @@ class CRUDUser:
     async def create(self, session: AsyncSession, obj_in: UserCreate) -> None:
         self.logger.info("Creating new user: {obj_in.username}")
         try:
-            session.add(obj_in)
+            db_obj = User(
+                username=obj_in.username,
+                email=obj_in.email,
+                is_suervisor=obj_in.is_supervisor,
+                ctstage_name=obj_in.ctstage_name,
+                sweet_name=obj_in.sweet_name,
+                group_id=obj_in.group_id
+            )
+            session.add(db_obj)
             await session.flush()
             # commitはsessionのfinallyで行う
-            self.logger.info(f"User created successfully: {obj_in.id}")
+            self.logger.info(f"User created successfully: {db_obj.id}")
         except IntegrityError as e:
             # エラーメッセージやコードを検査して、具体的なエラータイプを特定
             if "username" in str(e.orig).lower():

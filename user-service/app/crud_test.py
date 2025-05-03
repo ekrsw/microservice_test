@@ -16,11 +16,11 @@ async def main():
     await db.init()
 
     # 登録するユーザー情報
-    group_in = GroupCreate(
+    user_in = UserCreate(
         group_name="test_group"
     )
     async with AsyncSessionLocal() as session:
-        await group_crud.create(session, group_in)
+        await group_crud.create(session, user_in)
         await session.commit()
         
 if __name__ == "__main__":

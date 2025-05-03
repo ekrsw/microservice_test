@@ -9,7 +9,6 @@ class UserBase(BaseModel):
 class UserCreate(BaseModel):
     username: str
     email: EmailStr
-    is_active: Optional[bool] = True
     is_supervisor: Optional[bool] = False
     ctstage_name: Optional[str] = None
     sweet_name: Optional[str] = None

@@ -13,17 +13,22 @@ class CRUDGroup:
     async def create(self, session: AsyncSession, obj_in: GroupCreate) -> Group:
         self.logger.info(f"Createing new group: {obj_in.group_name}")
         try:
-            session.add(obj_in)
+            db_obj = Group(
+                group_name=obj_in.group_name
+            )
+            session.add(db_obj)
             await session.flush()
             # commitはsessionのfinallyで行う
-            self.logger.info(f"Group created successfully: {obj_in.id}")
+            self.logger.info(f"Group created successfully: {db_obj.id}")
         except IntegrityError as e:
             # エラーメッセージやコードを検査して、具体的なエラータイプを特定
             if "group_name" in str(e.orig).lower():
-                self.logger.error(f"Failed to create group: '{obj_in.group_name}'")
+                self.logger.error(f"Failed to create group: '{db_obj.group_name}'")
                 raise DuplicateGroupNameError("Group name already exists")
             else:
                 # その他のIntegrityErrorの場合
                 self.logger.error(f"Database integrity error while creating user: {str(e)}")
                 raise DatabaseIntegrityError("Database integrity error") from e
-        return obj_in
+        return db_obj
+
+group_crud = CRUDGroup()

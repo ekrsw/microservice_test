@@ -4,7 +4,6 @@ from typing import Optional
 import uuid
 
 from app.db.base import Base
-from app.models.group import Group
 
 
 class User(Base):

@@ -89,7 +89,18 @@ class CRUDUser:
                                      message=f"Email already exists: {existing_email}")
         
         # 5. すべてのチェックが通過したら、ユーザーを作成
-        session.add_all(obj_in_list)
+        db_objs = []
+        for obj_in in obj_in_list:
+            db_obj = User(
+                username=obj_in.username,
+                email=obj_in.email,
+                is_suervisor=obj_in.is_supervisor,
+                ctstage_name=obj_in.ctstage_name,
+                sweet_name=obj_in.sweet_name,
+                group_id=obj_in.group_id
+            )
+            db_objs.append(db_obj)
+        session.add_all(db_objs)
         await session.flush()
         # commitはsessionのfinallyで行う
         self.logger.info(f"Successfully created {len(obj_in_list)} users")

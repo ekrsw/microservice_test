@@ -32,10 +32,6 @@ class UserCreateRequest(BaseModel):
                 "timestamp": "2025-05-06T03:00:00",
                 "username": "testuser",
                 "email": "user@example.com",
-                "is_supervisor": False,
-                "ctstage_name": "ctstage_user",
-                "sweet_name": "sweet_user",
-                "group_id": None,
                 "source_service": "auth-service",
                 "retry_count": 0
             }

@@ -7,6 +7,11 @@ services:
     restart: always
     env_file:
       - .env
+    environment:
+      USER_SERVICE_EXTERNAL_PORT: ${USER_SERVICE_EXTERNAL_PORT}
+      USER_SERVICE_INTERNAL_PORT: ${USER_SERVICE_INTERNAL_PORT}
+      USER_POSTGRES_EXTERNAL_PORT: ${USER_POSTGRES_EXTERNAL_PORT}
+      USER_POSTGRES_INTERNAL_PORT: ${USER_POSTGRES_INTERNAL_PORT}
     depends_on:
       user-db:
         condition: service_healthy

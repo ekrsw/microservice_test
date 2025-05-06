@@ -23,7 +23,7 @@ RUN adduser --disabled-password --gecos "" appuser && \
     # ボリュームマウントポイントの所有権を変更
     mkdir -p /workdir/.pytest_cache && \
     # 秘密鍵のパーミッションを設定
-    chmod 600 /workdir/keys/private.pem && \
+    chmod 600 /workdir/keys/public.pem && \
     chown -R appuser:appuser /workdir
 
 # Uvicornでアプリケーションを起動（ワーカー数を制限）

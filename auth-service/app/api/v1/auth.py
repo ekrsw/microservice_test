@@ -51,7 +51,7 @@ async def register_auth_user(
     try:
         # 1. auth-serviceでユーザーを作成（user_idはnull）
         new_user = await auth_user_crud.create(async_session, user_in)
-        await async_session.commit()
+        # commitはget_async_sessionのfinallyブロックで自動的に行われるため削除
         logger.info(f"auth-serviceでユーザー登録成功: {new_user.username}")
         
         # 2. user-serviceにユーザー作成リクエストを送信

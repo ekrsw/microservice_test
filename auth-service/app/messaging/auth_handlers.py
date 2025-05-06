@@ -7,7 +7,7 @@ import uuid
 from app.core.logging import get_logger
 from app.core.rabbitmq import rabbitmq_client, USER_CREATED_QUEUE
 from app.crud.auth_user import auth_user_crud
-from app.db.session import get_async_session
+from app.db.session import AsyncSessionLocal
 from app.schemas.message import UserCreatedResponse, UserCreationStatus
 
 logger = get_logger(__name__)
@@ -31,8 +31,8 @@ async def handle_user_created_message(message: IncomingMessage) -> None:
             
             # 成功した場合のみ、auth_userのuser_idを更新
             if response.status == UserCreationStatus.SUCCESS and response.user_id:
-                # データベースセッションを取得
-                async for session in get_async_session():
+                # AsyncSessionLocalを使用して明示的にセッションを作成
+                async with AsyncSessionLocal() as session:
                     try:
                         # ユーザー名でauth_userを検索
                         db_user = await auth_user_crud.get_by_username(session, response.username)

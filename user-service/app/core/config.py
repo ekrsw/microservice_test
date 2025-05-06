@@ -12,6 +12,12 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     LOG_TO_FILE: bool = False
     LOG_FILE_PATH: str = "logs/USER_service.log"
+    
+    # RabbitMQ設定
+    RABBITMQ_HOST: str = "rabbitmq"
+    RABBITMQ_PORT: int = 5672
+    RABBITMQ_USER: str = "guest"
+    RABBITMQ_PASSWORD: str = "guest"
 
      # データベース関係
     USER_POSTGRES_HOST: str

@@ -14,3 +14,4 @@ pytest-asyncio==0.26.0
 SQLAlchemy==2.0.40
 tzdata==2025.2
 uvicorn==0.34.2
+aio-pika==9.4.0 # RabbitMQ用の非同期クライアント

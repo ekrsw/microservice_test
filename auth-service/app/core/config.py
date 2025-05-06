@@ -23,7 +23,7 @@ class Settings(BaseSettings):
 
     # Redis設定
     AUTH_REDIS_HOST: str = "auth_redis"
-    AUTH_REDIS_PORT: int = 6379
+    AUTH_REDIS_PORT: str = "6379"
     AUTH_REDIS_PASSWORD: Optional[str] = None
 
     # トークン設定

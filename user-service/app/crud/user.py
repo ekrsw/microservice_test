@@ -19,8 +19,8 @@ from app.schemas.user import UserCreate
 class CRUDUser:
     # クラスレベルのロガーの初期化
     logger = get_logger(__name__)
-    async def create(self, session: AsyncSession, obj_in: UserCreate) -> None:
-        self.logger.info("Creating new user: {obj_in.username}")
+    async def create(self, session: AsyncSession, obj_in: UserCreate) -> User:
+        self.logger.info(f"Creating new user: {obj_in.username}")
         try:
             db_obj = User(
                 username=obj_in.username,
@@ -42,7 +42,7 @@ class CRUDUser:
                 # その他のIntegrityErrorの場合
                 self.logger.error(f"Database integrity error while creating user: {str(e)}")
                 raise DatabaseIntegrityError("Database integrity error") from e
-        return obj_in
+        return db_obj
     
     async def create_multiple(self, session: AsyncSession, obj_in_list: List[UserCreate]) -> List[User]:
         self.logger.info(f"Creating multiple users: {len(obj_in_list)} users")
@@ -99,8 +99,8 @@ class CRUDUser:
         session.add_all(db_objs)
         await session.flush()
         # commitはsessionのfinallyで行う
-        self.logger.info(f"Successfully created {len(obj_in_list)} users")
-        return obj_in_list
+        self.logger.info(f"Successfully created {len(db_objs)} users")
+        return db_objs
     
     async def get_all(self, session: AsyncSession) -> List[User]:
         self.logger.info("Retrieving all users")

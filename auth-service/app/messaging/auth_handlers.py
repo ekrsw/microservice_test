@@ -29,22 +29,27 @@ async def handle_user_created_message(message: IncomingMessage) -> None:
             
             logger.info(f"ユーザー作成結果メッセージを受信: message_id={response.message_id}, status={response.status}")
             
-            # 成功した場合のみ、auth_userのuser_idを更新
-            if response.status == UserCreationStatus.SUCCESS and response.user_id:
-                # AsyncSessionLocalを使用して明示的にセッションを作成
-                async with AsyncSessionLocal() as session:
-                    try:
-                        # ユーザー名でauth_userを検索
-                        db_user = await auth_user_crud.get_by_username(session, response.username)
-                        
-                        # user_idを更新
-                        db_user.user_id = response.user_id
-                        await session.commit()
-                        
-                        logger.info(f"auth_userのuser_idを更新しました: username={response.username}, user_id={response.user_id}")
-                    except Exception as e:
-                        await session.rollback()
-                        logger.error(f"auth_userのuser_id更新中にエラーが発生: {str(e)}")
+            # ステータスに基づいて処理を分岐
+            if response.status == UserCreationStatus.SUCCESS:
+                # 成功した場合
+                if response.user_id:
+                    # AsyncSessionLocalを使用して明示的にセッションを作成
+                    async with AsyncSessionLocal() as session:
+                        try:
+                            # ユーザー名でauth_userを検索
+                            db_user = await auth_user_crud.get_by_username(session, response.username)
+                            
+                            # user_idを更新
+                            db_user.user_id = response.user_id
+                            await session.commit()
+                            
+                            logger.info(f"auth_userのuser_idを更新しました: username={response.username}, user_id={response.user_id}")
+                        except Exception as e:
+                            await session.rollback()
+                            logger.error(f"auth_userのuser_id更新中にエラーが発生: {str(e)}")
+                else:
+                    # user_idがない場合
+                    logger.warning(f"ユーザー作成は成功しましたが、user_idがありません: username={response.username}")
             else:
                 # エラーの場合はログに記録
                 logger.warning(f"ユーザー作成に失敗: status={response.status}, error={response.error_message}")

@@ -7,7 +7,7 @@ import uuid
 from app.core.logging import get_logger
 from app.core.rabbitmq import rabbitmq_client, USER_CREATE_QUEUE, USER_CREATED_QUEUE
 from app.crud.user import user_crud
-from app.db.session import get_async_session
+from app.db.session import get_async_session, AsyncSessionLocal
 from app.schemas.user import UserCreate
 from app.schemas.message import UserCreateRequest, UserCreatedResponse, UserCreationStatus
 
@@ -39,7 +39,7 @@ async def handle_user_create_message(message: IncomingMessage) -> None:
             )
             
             # データベースセッションを取得
-            async for session in get_async_session():
+            async with AsyncSessionLocal() as session:
                 try:
                     # UserCreateオブジェクトを作成
                     user_create = UserCreate(
@@ -49,10 +49,9 @@ async def handle_user_create_message(message: IncomingMessage) -> None:
                     
                     # ユーザーを作成
                     created_user = await user_crud.create(session, user_create)
-                    await session.commit()
                     
                     # 作成されたユーザーのIDを取得
-                    user_id = created_user.id if hasattr(created_user, 'id') else None
+                    user_id = created_user.id
                     
                     # 成功レスポンスを設定
                     response.status = UserCreationStatus.SUCCESS

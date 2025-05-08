@@ -52,6 +52,9 @@ async def handle_user_create_message(message: IncomingMessage) -> None:
                     
                     # 作成されたユーザーのIDを取得
                     user_id = created_user.id
+
+                    # commitトランザクション
+                    await session.commit()
                     
                     # 成功レスポンスを設定
                     response.status = UserCreationStatus.SUCCESS
@@ -59,6 +62,7 @@ async def handle_user_create_message(message: IncomingMessage) -> None:
                     response.processing_time_ms = (time.time() - start_time) * 1000
                     
                     logger.info(f"ユーザーを作成しました: username={request.username}, user_id={user_id}")
+                    
                     
                 except Exception as e:
                     await session.rollback()

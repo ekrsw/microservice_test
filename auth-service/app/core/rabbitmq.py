@@ -34,7 +34,7 @@ class RabbitMQClient:
         
         try:
             # 接続の確立（リトライ機能付き）
-            for attempt in range(5):
+            for attempt in range(settings.RABBITMQ_RETRY_COUNT):
                 try:
                     logger.info(f"RabbitMQへの接続を試行: 試行回数 {attempt + 1}/5")
                     self.connection = await connect_robust(rabbitmq_url)

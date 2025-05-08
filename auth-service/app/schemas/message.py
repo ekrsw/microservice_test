@@ -15,12 +15,6 @@ class UserCreateRequest(BaseModel):
     username: str = Field(..., description="ユーザー名")
     email: EmailStr = Field(..., description="メールアドレス")
     
-    # オプションフィールド
-    is_supervisor: bool = Field(default=False, description="管理者権限")
-    ctstage_name: Optional[str] = Field(None, description="CTステージユーザー名")
-    sweet_name: Optional[str] = Field(None, description="Sweet名")
-    group_id: Optional[uuid.UUID] = Field(None, description="所属グループID")
-    
     # その他のメタデータ
     source_service: str = Field(default="auth-service", description="送信元サービス")
     retry_count: int = Field(default=0, description="リトライ回数")
@@ -32,10 +26,6 @@ class UserCreateRequest(BaseModel):
                 "timestamp": "2025-05-06T03:00:00",
                 "username": "testuser",
                 "email": "user@example.com",
-                "is_supervisor": False,
-                "ctstage_name": "ctstage_user",
-                "sweet_name": "sweet_user",
-                "group_id": None,
                 "source_service": "auth-service",
                 "retry_count": 0
             }

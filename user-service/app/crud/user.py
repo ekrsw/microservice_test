@@ -25,10 +25,6 @@ class CRUDUser:
             db_obj = User(
                 username=obj_in.username,
                 email=obj_in.email,
-                is_suervisor=obj_in.is_supervisor,
-                ctstage_name=obj_in.ctstage_name,
-                sweet_name=obj_in.sweet_name,
-                group_id=obj_in.group_id
             )
             session.add(db_obj)
             await session.flush()

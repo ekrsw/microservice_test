@@ -44,11 +44,7 @@ async def handle_user_create_message(message: IncomingMessage) -> None:
                     # UserCreateオブジェクトを作成
                     user_create = UserCreate(
                         username=request.username,
-                        email=request.email,
-                        is_supervisor=request.is_supervisor,
-                        ctstage_name=request.ctstage_name,
-                        sweet_name=request.sweet_name,
-                        group_id=request.group_id
+                        email=request.email
                     )
                     
                     # ユーザーを作成

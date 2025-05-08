@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     RABBITMQ_PORT: int = 5672
     RABBITMQ_USER: str = "guest"
     RABBITMQ_PASSWORD: str = "guest"
+    RABBITMQ_RETRY_COUNT: int = 5
 
      # データベース関係
     USER_POSTGRES_HOST: str

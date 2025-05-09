@@ -12,6 +12,8 @@ from app.api.v1.api import api_router
 from app.core.config import settings
 from app.core.logging import app_logger, get_request_logger
 from app.db.init import Database
+from app.messaging.rabbitmq import rabbitmq_client
+from app.messaging.auth_handler import handle_user_creation_response
 
 
 # ログディレクトリの作成（ファイルログが有効な場合）
@@ -30,6 +32,14 @@ async def lifespan(app: FastAPI):
         await db.init()
         app_logger.info("Database initialized successfully")
         
+        # RabbitMQ初期化
+        await rabbitmq_client.initialize()
+        app_logger.info("RabbitMQ initialized successfully")
+        
+        # ユーザー作成レスポンスのコンシューマーをセットアップ
+        await rabbitmq_client.setup_user_creation_response_consumer(handle_user_creation_response)
+        app_logger.info("User creation response consumer setup successfully")
+        
     except Exception as e:
         app_logger.error(f"Initialization failed: {str(e)}")
         raise
@@ -38,6 +48,13 @@ async def lifespan(app: FastAPI):
 
     # シャットダウンの処理
     app_logger.info("Shutting down application...")
+    
+    # RabbitMQ接続のクローズ
+    try:
+        await rabbitmq_client.close()
+        app_logger.info("RabbitMQ connection closed")
+    except Exception as e:
+        app_logger.error(f"Error closing RabbitMQ connection: {str(e)}")
 
 # FastAPIアプリケーションの作成
 app = FastAPI(

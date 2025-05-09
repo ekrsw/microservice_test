@@ -3,7 +3,7 @@ from pydantic import EmailStr
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List
+from typing import List, Optional
 import uuid
 
 from app.core.logging import get_logger
@@ -45,6 +45,47 @@ class CRUDAuthUser:
             elif "email" in str(e.orig).lower():
                 self.logger.error(f"Failed to create user: duplicate email '{obj_in.email}'")
                 raise DuplicateEmailError("Email already exists")
+            else:
+                # その他のIntegrityErrorの場合
+                self.logger.error(f"Database integrity error while creating user: {str(e)}")
+                raise DatabaseIntegrityError("Database integrity error") from e
+        return db_obj
+    
+    async def create_with_user_id(self, session: AsyncSession, obj_in: AuthUserCreate, user_id: uuid.UUID) -> AuthUser:
+        """
+        user_idを指定してユーザーを作成する
+        
+        Args:
+            session: データベースセッション
+            obj_in: ユーザー作成スキーマ
+            user_id: user-serviceから受け取ったユーザーID
+            
+        Returns:
+            作成されたユーザー
+        """
+        self.logger.info(f"Creating new user with username: {obj_in.username} and user_id: {user_id}")
+        try:
+            db_obj = AuthUser(
+                username=obj_in.username,
+                email=obj_in.email,
+                hashed_password=get_password_hash(obj_in.password),
+                user_id=user_id
+            )
+            session.add(db_obj)
+            await session.flush()
+            # commitはsessionのfinallyで行う
+            self.logger.info(f"User created successfully: {db_obj.id}, user_id: {db_obj.user_id}")
+        except IntegrityError as e:
+            # エラーメッセージやコードを検査して、具体的なエラータイプを特定
+            if "username" in str(e.orig).lower():
+                self.logger.error(f"Failed to create user: duplicate username '{obj_in.username}'")
+                raise DuplicateUsernameError("Username already exists")
+            elif "email" in str(e.orig).lower():
+                self.logger.error(f"Failed to create user: duplicate email '{obj_in.email}'")
+                raise DuplicateEmailError("Email already exists")
+            elif "user_id" in str(e.orig).lower():
+                self.logger.error(f"Failed to create user: duplicate user_id '{user_id}'")
+                raise DatabaseIntegrityError("User ID already exists")
             else:
                 # その他のIntegrityErrorの場合
                 self.logger.error(f"Database integrity error while creating user: {str(e)}")

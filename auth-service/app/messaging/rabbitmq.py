@@ -27,7 +27,7 @@ class RabbitMQClient:
         
         try:
             # RabbitMQ接続文字列の構築
-            rabbitmq_url = f"amqp://{settings.RABBITMQ_USER}:{settings.RABBITMQ_PASSWORD}@{settings.RABBITMQ_HOST}:{settings.RABBITMQ_PORT}/"
+            rabbitmq_url = f"amqp://{settings.RABBITMQ_USER}:{settings.RABBITMQ_PASSWORD}@{settings.RABBITMQ_HOST}:{settings.RABBITMQ_PORT}/{settings.RABBITMQ_VHOST}"
             
             # 接続の確立
             self.connection = await aio_pika.connect_robust(rabbitmq_url)
@@ -35,13 +35,14 @@ class RabbitMQClient:
             # チャネルの開設
             self.channel = await self.connection.channel()
             
-            # exchangeの宣言
+            # user_events exchangeの宣言
             self.user_events_exchange = await self.channel.declare_exchange(
-                "user_events",
+                settings.USER_SYNC_EXCHANGE,
                 ExchangeType.TOPIC,
                 durable=True
             )
             
+            # auth_events exchangeの宣言
             self.auth_events_exchange = await self.channel.declare_exchange(
                 "auth_events",
                 ExchangeType.TOPIC,
@@ -74,13 +75,13 @@ class RabbitMQClient:
             }
             
             # メッセージの発行
-            await self.auth_events_exchange.publish(
+            await self.user_events_exchange.publish(
                 Message(
                     body=json.dumps(message_body).encode(),
                     content_type="application/json",
                     delivery_mode=aio_pika.DeliveryMode.PERSISTENT
                 ),
-                routing_key="user.created"
+                routing_key=settings.USER_SYNC_ROUTING_KEY
             )
             
             self.logger.info(f"ユーザーイベントを発行しました: {event_type}, ユーザーID={user_data.get('id', 'unknown')}")
@@ -89,21 +90,21 @@ class RabbitMQClient:
             # エラーはログに記録するが例外は再送出しない
             # メッセージングがサービスの主要機能を妨げるべきではない
     
-    async def setup_user_creation_consumer(self, callback: Callable[[Dict[str, Any]], Awaitable[None]]):
-        """ユーザー作成リクエストのコンシューマーをセットアップ"""
+    async def setup_user_creation_response_consumer(self, callback: Callable[[Dict[str, Any]], Awaitable[None]]):
+        """user-serviceからのユーザー作成レスポンスを受け取るコンシューマーをセットアップ"""
         if not self.is_initialized:
             await self.initialize()
         
         # キューの宣言
         queue = await self.channel.declare_queue(
-            "user_creation_queue",
+            "auth_user_creation_queue",
             durable=True
         )
         
         # exchangeとキューのバインド
         await queue.bind(
-            exchange=self.user_events_exchange,
-            routing_key="user.sync"
+            exchange=self.auth_events_exchange,
+            routing_key="user.created"
         )
         
         # コンシューマーの設定
@@ -117,7 +118,7 @@ class RabbitMQClient:
                     event_type = body.get("event_type")
                     if event_type == "user.created":
                         user_data = body.get("user_data", {})
-                        self.logger.info(f"ユーザー作成リクエストを受信: {user_data}")
+                        self.logger.info(f"ユーザー作成レスポンスを受信: {user_data}")
                         
                         # コールバック関数の呼び出し
                         await callback(user_data)
@@ -132,7 +133,7 @@ class RabbitMQClient:
         # コンシューマーの開始
         consumer_tag = await queue.consume(process_message)
         self.consumer_tags.append(consumer_tag)
-        self.logger.info("ユーザー作成リクエストのコンシューマーを開始しました")
+        self.logger.info("ユーザー作成レスポンスのコンシューマーを開始しました")
     
     def _serialize_user_data(self, user_data: Dict[str, Any]) -> Dict[str, Any]:
         """ユーザーデータのシリアライズ"""
@@ -154,6 +155,9 @@ class UserEventTypes:
     USER_CREATED = "user.created"
     USER_UPDATED = "user.updated"
     USER_DELETED = "user.deleted"
+    PASSWORD_CHANGED = "user.password_changed"
+    USER_ACTIVATED = "user.activated"
+    USER_DEACTIVATED = "user.deactivated"
 
 
 # ヘルパー関数
@@ -170,3 +174,14 @@ async def publish_user_updated(user_data: Dict[str, Any]):
 async def publish_user_deleted(user_data: Dict[str, Any]):
     """ユーザー削除イベントの発行"""
     await rabbitmq_client.publish_user_event(UserEventTypes.USER_DELETED, user_data)
+
+
+async def publish_password_changed(user_data: Dict[str, Any]):
+    """パスワード変更イベントの発行"""
+    await rabbitmq_client.publish_user_event(UserEventTypes.PASSWORD_CHANGED, user_data)
+
+
+async def publish_user_status_changed(user_data: Dict[str, Any], is_active: bool):
+    """ユーザーステータス変更イベントの発行"""
+    event_type = UserEventTypes.USER_ACTIVATED if is_active else UserEventTypes.USER_DEACTIVATED
+    await rabbitmq_client.publish_user_event(event_type, user_data)

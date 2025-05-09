@@ -13,6 +13,15 @@ class Settings(BaseSettings):
     LOG_TO_FILE: bool = False
     LOG_FILE_PATH: str = "logs/auth_service.log"
 
+    # RabbitMQ設定
+    RABBITMQ_HOST: str = "rabbitmq"
+    RABBITMQ_PORT: int = 5672
+    RABBITMQ_USER: str = "guest"
+    RABBITMQ_PASSWORD: str = "guest"
+    RABBITMQ_VHOST: str = "/"
+    USER_SYNC_EXCHANGE: str = "user_events"
+    USER_SYNC_ROUTING_KEY: str = "user.sync"
+
     # データベース関係
     AUTH_POSTGRES_HOST: str
     AUTH_POSTGRES_INTERNAL_PORT: str = "5432"

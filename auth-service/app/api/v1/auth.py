@@ -24,6 +24,13 @@ from app.crud.exceptions import (
     DuplicateUsernameError
     )
 from app.db.session import get_async_session
+from app.messaging.rabbitmq import (
+    publish_user_created,
+    publish_user_updated,
+    publish_user_deleted,
+    publish_password_changed,
+    publish_user_status_changed
+)
 from app.schemas.auth_user import (
     AuthUserCreate,
     AuthUserUpdate,
@@ -36,32 +43,35 @@ from app.schemas.auth_user import (
 
 router = APIRouter()
 
-@router.post("/register", response_model=AuthUserResponse)
+@router.post("/register", status_code=status.HTTP_202_ACCEPTED)
 async def register_auth_user(
     request: Request,
-    user_in: AuthUserCreate,
-    async_session: AsyncSession = Depends(get_async_session)
+    user_in: AuthUserCreate
     ) -> Any:
     logger = get_request_logger(request)
     logger.info(f"ユーザー登録リクエスト: {user_in.username}")
 
+    # ユーザー名とメールアドレスの重複チェック（実際のユーザー作成はuser-serviceで行われる）
     try:
-        # 1. auth-serviceでユーザーを作成（user_idはnull）
-        new_user = await auth_user_crud.create(async_session, user_in)
-        # commitはget_async_sessionのfinallyブロックで自動的に行われるため削除
-        logger.info(f"auth-serviceでユーザー登録成功: {new_user.username}")
-            
-    except DuplicateEmailError:
-        logger.error(f"ユーザー登録失敗: メールアドレスが重複しています: {user_in.email}")
-        raise HTTPException(status_code=400, detail="Email already exists")
-    except DuplicateUsernameError:
-        logger.error(f"ユーザー登録失敗: ユーザー名が重複しています: {user_in.username}")
-        raise HTTPException(status_code=400, detail="Username already exists")
+        # ユーザー作成イベントの発行
+        user_data = {
+            "username": user_in.username,
+            "email": user_in.email,
+            "password": user_in.password  # パスワードも含める（本来はRedisなどに一時保存すべき）
+        }
+        await publish_user_created(user_data)
+        logger.info(f"ユーザー作成イベント発行: username={user_in.username}")
+        
+        # 202 Acceptedを返す（非同期処理が開始されたことを示す）
+        return {
+            "message": "ユーザー登録リクエストを受け付けました",
+            "username": user_in.username,
+            "email": user_in.email
+        }
+        
     except Exception as e:
-        logger.error(f"ユーザー登録失敗: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal Server Error")
-    
-    return new_user
+        logger.error(f"ユーザー作成イベント発行失敗: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="ユーザー登録リクエストの処理中にエラーが発生しました")
 
 @router.post("/login", response_model=Token)
 async def login(

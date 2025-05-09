@@ -12,7 +12,7 @@ from app.api.v1.api import api_router
 from app.core.config import settings
 from app.core.logging import app_logger, get_request_logger
 from app.db.init import Database
-from app.core.rabbitmq import rabbitmq_client
+from app.messaging.rabbitmq import rabbitmq_client
 from app.messaging.user_handler import handle_user_creation_request
 
 

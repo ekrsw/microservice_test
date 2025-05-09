@@ -6,7 +6,7 @@ from app.core.logging import app_logger
 from app.db.session import get_async_session
 from app.crud.user import user_crud
 from app.schemas.user import UserCreate
-from app.core.rabbitmq import publish_user_created
+from app.messaging.rabbitmq import publish_user_created
 
 
 async def handle_user_creation_request(user_data: Dict[str, Any]):

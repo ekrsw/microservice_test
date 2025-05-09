@@ -50,16 +50,16 @@ async def handle_user_create_message(message: IncomingMessage) -> None:
                     # ユーザーを作成
                     created_user = await user_crud.create(session, user_create)
                     
-                    # 作成されたユーザーのIDを取得
+                    # 作成されたユーザーの情報を先に取得しておく
                     user_id = created_user.id
-
-                    # commitトランザクション
-                    await session.commit()
                     
-                    # 成功レスポンスを設定
+                    # レスポンスの設定を先に行う
                     response.status = UserCreationStatus.SUCCESS
                     response.user_id = user_id
                     response.processing_time_ms = (time.time() - start_time) * 1000
+                    
+                    # トランザクションをコミット
+                    await session.commit()
                     
                     logger.info(f"ユーザーを作成しました: username={request.username}, user_id={user_id}")
                     

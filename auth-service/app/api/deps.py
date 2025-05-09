@@ -41,7 +41,7 @@ async def get_current_user(
         if payload is None:
             raise credentials_exception
         
-        user_id: str = payload.get("sub")
+        user_id: str = payload.get("user_id")
         
         if user_id is None:
             raise credentials_exception
@@ -50,7 +50,7 @@ async def get_current_user(
         raise credentials_exception
     
     # ユーザーをデータベースから取得
-    user = await auth_user_crud.get_by_id(async_session, user_id)
+    user = await auth_user_crud.get_by_user_id(async_session, user_id)
     if user is None:
         raise credentials_exception
     

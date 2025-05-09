@@ -36,9 +36,6 @@ from app.schemas.auth_user import (
 
 router = APIRouter()
 
-from app.core.rabbitmq import rabbitmq_client, USER_CREATE_QUEUE
-from app.schemas.message import UserCreateRequest
-
 @router.post("/register", response_model=AuthUserResponse)
 async def register_auth_user(
     request: Request,
@@ -53,25 +50,6 @@ async def register_auth_user(
         new_user = await auth_user_crud.create(async_session, user_in)
         # commitはget_async_sessionのfinallyブロックで自動的に行われるため削除
         logger.info(f"auth-serviceでユーザー登録成功: {new_user.username}")
-        
-        # 2. user-serviceにユーザー作成リクエストを送信
-        user_create_request = UserCreateRequest(
-            username=user_in.username,
-            email=user_in.email,
-            is_supervisor=False  # デフォルト値
-        )
-        
-        # メッセージをパブリッシュ
-        success = await rabbitmq_client.publish_message(
-            USER_CREATE_QUEUE,
-            user_create_request.model_dump()
-        )
-        
-        if success:
-            logger.info(f"user-serviceにユーザー作成リクエストを送信しました: {user_create_request.message_id}")
-        else:
-            logger.error(f"user-serviceへのメッセージ送信に失敗しました: {user_in.username}")
-            # メッセージ送信に失敗した場合でもユーザー作成は成功しているので、エラーにはしない
             
     except DuplicateEmailError:
         logger.error(f"ユーザー登録失敗: メールアドレスが重複しています: {user_in.email}")

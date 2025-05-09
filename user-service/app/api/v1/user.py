@@ -28,9 +28,16 @@ async def create_user(
     
     try:
         new_user = await user_crud.create(async_session, user_in)
+        # コミット前に必要な情報を変数に保存
+        username = new_user.username
+        user_id = new_user.id
+        
+        # トランザクションをコミット
         await async_session.commit()
-        logger.info(f"ユーザー作成成功: {new_user.username}")
-        return {"status": "success", "message": "User created successfully"}
+        
+        # 保存した変数を使用してログを出力
+        logger.info(f"ユーザー作成成功: {username}, id: {user_id}")
+        return {"status": "success", "message": "User created successfully", "user_id": str(user_id)}
     except DuplicateEmailError:
         logger.error(f"ユーザー作成失敗: メールアドレスが重複しています: {user_in.email}")
         raise HTTPException(status_code=400, detail="Email already exists")

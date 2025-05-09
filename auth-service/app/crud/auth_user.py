@@ -151,6 +151,17 @@ class CRUDAuthUser:
             raise UserNotFoundError(message=f"User with email {email} not found")
         return user
     
+    async def get_by_user_id(self, session: AsyncSession, user_id: uuid.UUID) -> AuthUser:
+        self.logger.info(f"Retrieving user by user_id: {user_id}")
+        result = await session.execute(select(AuthUser).filter(AuthUser.user_id == user_id))
+        user = result.scalar_one_or_none()
+        if user:
+            self.logger.info(f"Found user with user_id: {user_id}")
+        else:
+            self.logger.warning(f"User with user_id {user_id} not found")
+            raise UserNotFoundError(user_id=user_id)
+        return user
+    
     async def update_by_id(self, session: AsyncSession, id: uuid.UUID, obj_in: AuthUserUpdate) -> AuthUser:
         self.logger.info(f"Updating user by id: {id}")
         db_obj = await self.get_by_id(session, id)

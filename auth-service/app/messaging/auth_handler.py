@@ -3,6 +3,7 @@ from typing import Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import app_logger
+from app.core.redis import get_password_from_redis, delete_password_from_redis
 from app.db.session import get_async_session
 from app.crud.auth_user import auth_user_crud
 from app.schemas.auth_user import AuthUserCreate
@@ -29,10 +30,16 @@ async def handle_user_creation_response(user_data: Dict[str, Any]):
         original_request = user_data.get("original_request", {})
         username = original_request.get("username")
         email = original_request.get("email")
-        password = original_request.get("password")  # 本来はRedisなどから取得する必要がある
+        password_key = original_request.get("password_key")
         
-        if not username or not email or not password:
-            logger.error(f"必要なユーザー情報が不足しています: username={username}, email={email}")
+        if not username or not email or not password_key:
+            logger.error(f"必要なユーザー情報が不足しています: username={username}, email={email}, password_key={password_key}")
+            return
+        
+        # Redisからパスワードを取得
+        password = await get_password_from_redis(password_key)
+        if not password:
+            logger.error(f"パスワードの取得に失敗しました: key={password_key}")
             return
         
         # AsyncSessionの取得
@@ -53,6 +60,13 @@ async def handle_user_creation_response(user_data: Dict[str, Any]):
                 )
                 
                 logger.info(f"auth-serviceでユーザーを作成しました: ID={new_user.id}, user_id={new_user.user_id}")
+                
+                # 処理完了後、Redisからパスワード情報を削除（クリーンアップ）
+                delete_result = await delete_password_from_redis(password_key)
+                if delete_result:
+                    logger.info(f"一時保存されたパスワードを削除しました: key={password_key}")
+                else:
+                    logger.warning(f"一時保存されたパスワードの削除に失敗しました: key={password_key}")
                 
             except Exception as e:
                 logger.error(f"ユーザー作成処理中にエラーが発生しました: {str(e)}", exc_info=True)

@@ -6,6 +6,8 @@ from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Any
 
+from app.core.redis import save_password_to_redis
+
 from app.api.deps import get_current_user
 from app.core.config import settings
 from app.core.logging import get_request_logger
@@ -53,11 +55,15 @@ async def register_auth_user(
 
     # ユーザー名とメールアドレスの重複チェック（実際のユーザー作成はuser-serviceで行われる）
     try:
-        # ユーザー作成イベントの発行
+        # パスワードをRedisに一時保存
+        password_key = await save_password_to_redis(user_in.username, user_in.password)
+        logger.info(f"パスワードを一時保存しました: key={password_key}")
+        
+        # ユーザー作成イベントの発行（パスワードを含めず、代わりにキー情報を含める）
         user_data = {
             "username": user_in.username,
             "email": user_in.email,
-            "password": user_in.password  # パスワードも含める（本来はRedisなどに一時保存すべき）
+            "password_key": password_key
         }
         await publish_user_created(user_data)
         logger.info(f"ユーザー作成イベント発行: username={user_in.username}")

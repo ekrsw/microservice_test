@@ -2,10 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Any, List
 
+from app.api.deps import get_current_user
 from app.core.logging import get_request_logger
 from app.crud.user import user_crud
 from app.db.session import get_async_session
-from app.schemas.user import UserCreate
+from app.schemas.user import UserCreate, UserResponse
 from app.crud.exceptions import (
     UserNotFoundError,
     DuplicateEmailError,
@@ -14,7 +15,7 @@ from app.crud.exceptions import (
 
 router = APIRouter()
 
-@router.post("/users")
+@router.post("/create")
 async def create_user(
     request: Request,
     user_in: UserCreate,
@@ -90,3 +91,11 @@ async def get_user(
     except Exception as e:
         logger.error(f"ユーザー取得失敗: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
+
+@router.get("/me", response_model=UserResponse)
+async def get_user_me(current_user: UserResponse = Depends(get_current_user)) -> Any:
+    """
+    現在のユーザー情報を取得するエンドポイント
+    - 認証が必要
+    """
+    return current_user

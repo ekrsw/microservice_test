@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     USER_POSTGRES_DB: str
     TZ: str
 
+    # auth-serviceへ接続するための設定
+    AUTH_SERVICE_INTERNAL_PORT: str = "8080"
+
     # トークン設定
     ALGORITHM: str = "RS256"
     PUBLIC_KEY_PATH: str = "keys/public.pem"   # 公開鍵のパス
@@ -46,6 +49,11 @@ class Settings(BaseSettings):
             f"{self.USER_POSTGRES_HOST}:{self.USER_POSTGRES_INTERNAL_PORT}/"
             f"{self.USER_POSTGRES_DB}"
         )
+    
+    @property
+    def AUTH_SERVICE_URL(self) -> str:
+        """認証サービスのURL"""
+        return f"http://auth-service:{self.AUTH_SERVICE_INTERNAL_PORT}/api/v1/auth/login"
     
     @property
     def PUBLIC_KEY(self) -> str:

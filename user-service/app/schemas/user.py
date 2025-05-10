@@ -9,3 +9,18 @@ class UserBase(BaseModel):
 class UserCreate(BaseModel):
     username: str
     email: EmailStr
+
+# レスポンスとして返すユーザー情報
+class UserInDBBase(UserBase):
+    id: uuid.UUID
+    username: str
+    email: EmailStr
+
+    model_config = {
+        "from_attributes": True,
+        "arbitrary_types_allowed": True
+    }
+
+
+class UserResponse(UserInDBBase):
+    pass

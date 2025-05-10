@@ -1,6 +1,6 @@
-from datetime import date
+from datetime import date, datetime
 
-from sqlalchemy import Boolean, Date, Integer, String, Uuid
+from sqlalchemy import Boolean, Date, DateTime, Integer, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import Optional
 import uuid
@@ -24,4 +24,5 @@ class Knowledge(Base):
     remarks: Mapped[Optional[str]] = mapped_column(String, unique=False, nullable=True, index=True)
 
     status: Mapped[int] = mapped_column(Integer, unique=False, nullable=False, default=0)
-    user: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False, unique=False)
+    submitted_by: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False, unique=False)
+    submitted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), unique=False, nullable=True)

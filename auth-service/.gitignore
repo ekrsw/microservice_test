@@ -9,3 +9,6 @@ keys/private.pem
 
 # 環境設定
 .env
+
+# Mac関連
+.DS_Store

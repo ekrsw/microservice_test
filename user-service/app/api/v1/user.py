@@ -50,7 +50,7 @@ async def create_user(
         logger.error(f"ユーザー作成失敗: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
-@router.get("/users")
+@router.get("/users", response_model=List[UserResponse])
 async def get_users(
     request: Request,
     async_session: AsyncSession = Depends(get_async_session)
@@ -69,7 +69,7 @@ async def get_users(
         logger.error(f"全ユーザー取得失敗: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
-@router.get("/users/{user_id}")
+@router.get("/users/{user_id}", response_model=UserResponse)
 async def get_user(
     request: Request,
     user_id: str,

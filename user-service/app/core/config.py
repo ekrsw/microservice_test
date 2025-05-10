@@ -53,7 +53,7 @@ class Settings(BaseSettings):
     @property
     def AUTH_SERVICE_URL(self) -> str:
         """認証サービスのURL"""
-        return f"http://auth-service:{self.AUTH_SERVICE_INTERNAL_PORT}/api/v1/auth/login"
+        return f"http://localhost:{self.AUTH_SERVICE_INTERNAL_PORT}/api/v1/auth/login"
     
     @property
     def PUBLIC_KEY(self) -> str:

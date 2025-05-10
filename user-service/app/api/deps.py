@@ -48,7 +48,7 @@ async def get_current_user(
     try:
         # トークンの検証
         payload = await validate_token(token)
-        user_id: str = payload.get("sub")
+        user_id: str = payload.get("user_id")
         if user_id is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -63,7 +63,7 @@ async def get_current_user(
         )
     
     # ユーザーの取得
-    db_user = await user_crud.get_by_user_id(db, UUID(user_id))
+    db_user = await user_crud.get_by_id(db, UUID(user_id))
     if db_user is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

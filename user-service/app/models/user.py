@@ -10,3 +10,5 @@ class User(Base):
 
     username: Mapped[str] = mapped_column(String, nullable=False, unique=True, index=True)
     email: Mapped[str] = mapped_column(String, unique=True, nullable=False, index=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    is_superuser: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)

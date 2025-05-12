@@ -13,6 +13,7 @@ from app.crud.exceptions import (
     DuplicateUsernameError
 )
 
+
 router = APIRouter()
 
 @router.post("/create")

@@ -25,6 +25,8 @@ class CRUDUser:
             db_obj = User(
                 username=obj_in.username,
                 email=obj_in.email,
+                is_active=obj_in.is_active,
+                is_superuser=obj_in.is_superuser
             )
             session.add(db_obj)
             await session.flush()
@@ -90,10 +92,8 @@ class CRUDUser:
             db_obj = User(
                 username=obj_in.username,
                 email=obj_in.email,
-                is_suervisor=obj_in.is_supervisor,
-                ctstage_name=obj_in.ctstage_name,
-                sweet_name=obj_in.sweet_name,
-                group_id=obj_in.group_id
+                is_active=obj_in.is_active,
+                is_sueruser=obj_in.is_superuser,
             )
             db_objs.append(db_obj)
         session.add_all(db_objs)

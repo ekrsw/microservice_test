@@ -59,6 +59,11 @@ def unique_password():
     
     return password
 
+@pytest.fixture(scope="function")
+def unique_user_id():
+    """ユニークなユーザーIDを生成する"""
+    return str(uuid.uuid4())
+
 @pytest_asyncio.fixture(scope="function")
 async def test_user(db_session, unique_username, unique_email):
     """テスト用のユーザーを作成する"""

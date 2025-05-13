@@ -52,7 +52,7 @@ async def test_create_multiple_users_transaction_rollback(db_session, monkeypatc
 
 
 @pytest.mark.asyncio
-async def test_create_multiple_users_with_duplicate_constraint(db_session, test_user):
+async def test_create_multiple_users_with_duplicate_constraint(db_session, unique_user_id, test_user):
     """複数ユーザー作成時に一意性制約違反が発生した場合、トランザクション全体がロールバックされることを確認する"""
     # 既存のユーザー名を取得
     existing_username = test_user.username
@@ -62,7 +62,8 @@ async def test_create_multiple_users_with_duplicate_constraint(db_session, test_
         AuthUserCreate(
             username=f"valid_user_{i}_{uuid.uuid4().hex[:8]}",
             email=f"valid_user_{i}_{uuid.uuid4().hex[:8]}@example.com",
-            password="password123"
+            password="password123",
+            user_id=uuid.uuid4()
         ) for i in range(3)
     ]
     

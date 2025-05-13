@@ -18,6 +18,7 @@ from app.crud.exceptions import (
 from app.models.auth_user import AuthUser
 from app.schemas.auth_user import (
     AuthUserCreate,
+    AuthUserCreateDB,
     AuthUserUpdate,
     AuthUserUpdatePassword
     )
@@ -25,13 +26,24 @@ from app.schemas.auth_user import (
 class CRUDAuthUser:
     # クラスレベルのロガーの初期化
     logger = get_logger(__name__)
-    async def create(self, session: AsyncSession, obj_in: AuthUserCreate) -> AuthUser:
-        self.logger.info(f"Creating new user with username: {obj_in.username}")
+    async def create(self, session: AsyncSession, obj_in: AuthUserCreateDB) -> AuthUser:
+        """
+        user_idを必須としてユーザーを作成する
+        
+        Args:
+            session: データベースセッション
+            obj_in: ユーザー作成スキーマ（user_idを含む）
+            
+        Returns:
+            作成されたユーザー
+        """
+        self.logger.info(f"Creating new user with username: {obj_in.username} and user_id: {obj_in.user_id}")
         try:
             db_obj = AuthUser(
                 username=obj_in.username,
                 email=obj_in.email,
-                hashed_password=get_password_hash(obj_in.password)
+                hashed_password=get_password_hash(obj_in.password),
+                user_id=obj_in.user_id
             )
             session.add(db_obj)
             await session.flush()
@@ -57,42 +69,26 @@ class CRUDAuthUser:
         
         Args:
             session: データベースセッション
-            obj_in: ユーザー作成スキーマ
+            obj_in: ユーザー作成スキーマ（user_idなし）
             user_id: user-serviceから受け取ったユーザーID
             
         Returns:
             作成されたユーザー
         """
         self.logger.info(f"Creating new user with username: {obj_in.username} and user_id: {user_id}")
-        try:
-            db_obj = AuthUser(
-                username=obj_in.username,
-                email=obj_in.email,
-                hashed_password=get_password_hash(obj_in.password),
-                user_id=user_id
-            )
-            session.add(db_obj)
-            await session.flush()
-            # commitはsessionのfinallyで行う
-            self.logger.info(f"User created successfully: {db_obj.id}, user_id: {db_obj.user_id}")
-        except IntegrityError as e:
-            # エラーメッセージやコードを検査して、具体的なエラータイプを特定
-            if "username" in str(e.orig).lower():
-                self.logger.error(f"Failed to create user: duplicate username '{obj_in.username}'")
-                raise DuplicateUsernameError("Username already exists")
-            elif "email" in str(e.orig).lower():
-                self.logger.error(f"Failed to create user: duplicate email '{obj_in.email}'")
-                raise DuplicateEmailError("Email already exists")
-            elif "user_id" in str(e.orig).lower():
-                self.logger.error(f"Failed to create user: duplicate user_id '{user_id}'")
-                raise DatabaseIntegrityError("User ID already exists")
-            else:
-                # その他のIntegrityErrorの場合
-                self.logger.error(f"Database integrity error while creating user: {str(e)}")
-                raise DatabaseIntegrityError("Database integrity error") from e
-        return db_obj
+        
+        # AuthUserCreateからAuthUserCreateDBを作成
+        db_obj_in = AuthUserCreateDB(
+            username=obj_in.username,
+            email=obj_in.email,
+            password=obj_in.password,
+            user_id=user_id
+        )
+        
+        # createメソッドを呼び出す
+        return await self.create(session, db_obj_in)
     
-    async def create_multiple(self, session: AsyncSession, obj_in_list: List[AuthUserCreate]) -> List[AuthUser]:
+    async def create_multiple(self, session: AsyncSession, obj_in_list: List[AuthUserCreateDB]) -> List[AuthUser]:
         self.logger.info(f"Creating multiple users: {len(obj_in_list)} users")
         # 1. 入力データからusernameとemailのリストを抽出
         usernames = [obj_in.username for obj_in in obj_in_list]
@@ -138,7 +134,8 @@ class CRUDAuthUser:
             db_obj = AuthUser(
                 username=obj_in.username,
                 email=obj_in.email,
-                hashed_password=get_password_hash(obj_in.password)
+                hashed_password=get_password_hash(obj_in.password),
+                user_id=obj_in.user_id
             )
             db_objs.append(db_obj)
         

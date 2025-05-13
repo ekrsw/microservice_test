@@ -12,6 +12,12 @@ class AuthUserCreate(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     email: EmailStr
     password: str = Field(..., min_length=1, max_length=16)
+    # user_idはregisterエンドポイントでは不要 (user-serviceから提供される)
+
+
+# CRUD処理用のスキーマ（user_idが必須）
+class AuthUserCreateDB(AuthUserCreate):
+    user_id: uuid.UUID = Field(...)
 
 
 class AuthUserUpdate(BaseModel):

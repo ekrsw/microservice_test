@@ -8,7 +8,7 @@ from app.crud.exceptions import (
     DuplicateEmailError,
     DatabaseQueryError
 )
-from app.schemas.auth_user import AuthUserCreate, AuthUserUpdate
+from app.schemas.auth_user import AuthUserCreate, AuthUserCreateDB, AuthUserUpdate
 
 
 @pytest.mark.asyncio
@@ -16,10 +16,11 @@ async def test_create_multiple_users_transaction_rollback(db_session, monkeypatc
     """複数ユーザー作成時に一部が失敗した場合、トランザクション全体がロールバックされることを確認する"""
     # 有効なユーザーデータを作成
     valid_users = [
-        AuthUserCreate(
+        AuthUserCreateDB(
             username=f"valid_user_{i}_{uuid.uuid4().hex[:8]}",
             email=f"valid_user_{i}_{uuid.uuid4().hex[:8]}@example.com",
-            password="password123"
+            password="password123",
+            user_id=uuid.uuid4()
         ) for i in range(3)
     ]
     
@@ -59,7 +60,7 @@ async def test_create_multiple_users_with_duplicate_constraint(db_session, uniqu
     
     # 有効なユーザーデータを作成
     valid_users = [
-        AuthUserCreate(
+        AuthUserCreateDB(
             username=f"valid_user_{i}_{uuid.uuid4().hex[:8]}",
             email=f"valid_user_{i}_{uuid.uuid4().hex[:8]}@example.com",
             password="password123",
@@ -68,10 +69,11 @@ async def test_create_multiple_users_with_duplicate_constraint(db_session, uniqu
     ]
     
     # 既存のユーザー名を持つユーザーデータを作成
-    duplicate_user = AuthUserCreate(
+    duplicate_user = AuthUserCreateDB(
         username=existing_username,  # 既存のユーザー名（一意性制約違反）
         email=f"duplicate_{uuid.uuid4().hex[:8]}@example.com",
-        password="password123"
+        password="password123",
+        user_id=uuid.uuid4()
     )
     
     # 有効なユーザーと重複ユーザーを混ぜる
@@ -154,10 +156,11 @@ async def test_session_rollback_on_exception(db_session):
         password = "password123"
         
         # ユーザーを作成してコミット
-        user_in = AuthUserCreate(
+        user_in = AuthUserCreateDB(
             username=username,
             email=email,
-            password=password
+            password=password,
+            user_id=uuid.uuid4()
         )
         created_user = await auth_user_crud.create(session1, user_in)
         await session1.commit()

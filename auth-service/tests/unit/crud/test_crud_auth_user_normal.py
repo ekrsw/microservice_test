@@ -4,7 +4,7 @@ import uuid
 from app.core.security import verify_password
 from app.crud.auth_user import auth_user_crud
 from app.crud.exceptions import UserNotFoundError
-from app.schemas.auth_user import AuthUserCreate, AuthUserUpdate, AuthUserUpdatePassword
+from app.schemas.auth_user import AuthUserCreate, AuthUserCreateDB, AuthUserUpdate, AuthUserUpdatePassword
 
 
 @pytest.mark.asyncio
@@ -13,10 +13,11 @@ async def test_create_auth_user(db_session, unique_username, unique_email, uniqu
     username = unique_username
     email = unique_email
     password = unique_password
-    user_in = AuthUserCreate(
+    user_in = AuthUserCreateDB(
         username=username,
         email=email,
-        password=password
+        password=password,
+        user_id=uuid.uuid4()
         )
     db_user = await auth_user_crud.create(db_session, user_in)
     
@@ -78,10 +79,11 @@ async def test_create_multiple_auth_users(db_session):
         expected_passwords.append(password)
         
         users_data.append(
-            AuthUserCreate(
+            AuthUserCreateDB(
                 username=username,
                 email=email,
-                password=password
+                password=password,
+                user_id=uuid.uuid4()
             )
         )
     
@@ -133,10 +135,11 @@ async def test_get_auth_user_by_email(db_session, unique_username, unique_email,
     password = unique_password
     
     # ユーザーを作成
-    user_in = AuthUserCreate(
+    user_in = AuthUserCreateDB(
         username=username,
         email=email,
-        password=password
+        password=password,
+        user_id=uuid.uuid4()
     )
     created_user = await auth_user_crud.create(db_session, user_in)
     
@@ -189,10 +192,11 @@ async def test_get_all_auth_users(db_session):
         email = f"get_all_test_{i}_{unique_id}@example.com"
         password = f"pass_{i}_{unique_id}"  # 16文字以内
         
-        user_in = AuthUserCreate(
+        user_in = AuthUserCreateDB(
             username=username,
             email=email,
-            password=password
+            password=password,
+            user_id=uuid.uuid4()
         )
         
         # ユーザーを作成
@@ -289,10 +293,11 @@ async def test_update_auth_user_username(db_session, unique_username, unique_ema
     email = unique_email
     password = unique_password
     
-    user_in = AuthUserCreate(
+    user_in = AuthUserCreateDB(
         username=original_username,
         email=email,
-        password=password
+        password=password,
+        user_id=uuid.uuid4()
     )
     created_user = await auth_user_crud.create(db_session, user_in)
     
@@ -333,10 +338,11 @@ async def test_update_auth_user_email(db_session, unique_username, unique_email,
     original_email = unique_email
     password = unique_password
     
-    user_in = AuthUserCreate(
+    user_in = AuthUserCreateDB(
         username=username,
         email=original_email,
-        password=password
+        password=password,
+        user_id=uuid.uuid4()
     )
     created_user = await auth_user_crud.create(db_session, user_in)
     
@@ -377,10 +383,11 @@ async def test_update_auth_user_password(db_session, unique_username, unique_ema
     email = unique_email
     original_password = "password123"
     
-    user_in = AuthUserCreate(
+    user_in = AuthUserCreateDB(
         username=username,
         email=email,
-        password=original_password
+        password=original_password,
+        user_id=uuid.uuid4()
     )
     created_user = await auth_user_crud.create(db_session, user_in)
     
@@ -422,10 +429,11 @@ async def test_update_auth_user_by_username(db_session, unique_username, unique_
     original_email = unique_email
     password = unique_password
     
-    user_in = AuthUserCreate(
+    user_in = AuthUserCreateDB(
         username=original_username,
         email=original_email,
-        password=password
+        password=password,
+        user_id=uuid.uuid4()
     )
     created_user = await auth_user_crud.create(db_session, user_in)
     
@@ -457,10 +465,11 @@ async def test_update_auth_user_username_by_username(db_session, unique_username
     email = unique_email
     password = unique_password
     
-    user_in = AuthUserCreate(
+    user_in = AuthUserCreateDB(
         username=original_username,
         email=email,
-        password=password
+        password=password,
+        user_id=uuid.uuid4()
     )
     created_user = await auth_user_crud.create(db_session, user_in)
     
@@ -499,10 +508,11 @@ async def test_delete_auth_user_by_username(db_session, unique_username, unique_
     email = unique_email
     password = unique_password
     
-    user_in = AuthUserCreate(
+    user_in = AuthUserCreateDB(
         username=username,
         email=email,
-        password=password
+        password=password,
+        user_id=uuid.uuid4()
     )
     created_user = await auth_user_crud.create(db_session, user_in)
     

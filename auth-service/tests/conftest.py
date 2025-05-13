@@ -8,7 +8,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app.db.base import Base
 from app.crud.auth_user import auth_user_crud
-from app.schemas.auth_user import AuthUserCreate
+from app.schemas.auth_user import AuthUserCreate, AuthUserCreateDB
 
 # テスト用のインメモリSQLiteデータベース
 @pytest_asyncio.fixture(scope="function")
@@ -70,7 +70,7 @@ async def test_user(db_session, unique_username, unique_email):
     username = unique_username
     email = unique_email
     password = "password123"
-    user_in = AuthUserCreate(username=username, email=email, password=password)
+    user_in = AuthUserCreateDB(username=username, email=email, password=password, user_id=uuid.uuid4())
     db_user = await auth_user_crud.create(db_session, user_in)
     await db_session.commit()
     return db_user

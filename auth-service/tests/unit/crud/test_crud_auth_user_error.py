@@ -7,7 +7,7 @@ from app.crud.exceptions import (
     DuplicateUsernameError,
     DatabaseIntegrityError
     )
-from app.schemas.auth_user import AuthUserCreate, AuthUserUpdate, AuthUserUpdatePassword
+from app.schemas.auth_user import AuthUserCreate, AuthUserCreateDB, AuthUserUpdate, AuthUserUpdatePassword
 
 
 @pytest.mark.asyncio
@@ -20,10 +20,11 @@ async def test_create_auth_user_with_invalid_email(db_session, unique_username):
     with pytest.raises(ValueError) as exc_info:
         await auth_user_crud.create(
             db_session,
-            AuthUserCreate(
+            AuthUserCreateDB(
                 username=username,
                 email=invalid_email,
-                password=password
+                password=password,
+                user_id=uuid.uuid4()
             )
         )
     
@@ -43,10 +44,11 @@ async def test_create_auth_user_with_empty_username(db_session, unique_email, un
     with pytest.raises(ValueError) as exc_info:
         await auth_user_crud.create(
             db_session,
-            AuthUserCreate(
+            AuthUserCreateDB(
                 username=username,
                 email=email,
-                password=password
+                password=password,
+                user_id=uuid.uuid4()
             )
         )
     
@@ -66,10 +68,11 @@ async def test_create_auth_user_with_empty_password(db_session, unique_username,
     with pytest.raises(ValueError) as exc_info:
         await auth_user_crud.create(
             db_session,
-            AuthUserCreate(
+            AuthUserCreateDB(
                 username=username,
                 email=email,
-                password=password
+                password=password,
+                user_id=uuid.uuid4()
             )
         )
     
@@ -85,10 +88,11 @@ async def test_create_auth_user_with_duplicate_username(db_session, test_user, u
     username = test_user.username
     email = "test_user@example.com"
     password = unique_password
-    user_in = AuthUserCreate(
+    user_in = AuthUserCreateDB(
         username=username,
         email=email,
-        password=password
+        password=password,
+        user_id=uuid.uuid4()
     )
     with pytest.raises(DuplicateUsernameError) as exc_info:
         await auth_user_crud.create(
@@ -103,10 +107,11 @@ async def test_create_auth_user_with_duplicate_email(db_session, test_user, uniq
     username = "test_user2"
     email = test_user.email
     password = unique_password
-    user_in = AuthUserCreate(
+    user_in = AuthUserCreateDB(
         username=username,
         email=email,
-        password=password
+        password=password,
+        user_id=uuid.uuid4()
     )
     with pytest.raises(DuplicateEmailError) as exc_info:
         await auth_user_crud.create(
@@ -126,10 +131,11 @@ async def test_create_auth_user_with_too_long_username(db_session, unique_email,
     with pytest.raises(ValueError) as exc_info:
         await auth_user_crud.create(
             db_session,
-            AuthUserCreate(
+            AuthUserCreateDB(
                 username=username,
                 email=email,
-                password=password
+                password=password,
+                user_id=uuid.uuid4()
             )
         )
     
@@ -150,10 +156,11 @@ async def test_create_auth_user_with_too_long_password(db_session, unique_userna
     with pytest.raises(ValueError) as exc_info:
         await auth_user_crud.create(
             db_session,
-            AuthUserCreate(
+            AuthUserCreateDB(
                 username=username,
                 email=email,
-                password=password
+                password=password,
+                user_id=uuid.uuid4()
             )
         )
     
@@ -173,15 +180,17 @@ async def test_create_multiple_auth_users_with_duplicate_username_in_input(db_se
     duplicate_username = f"duplicate_user_{unique_id}"
     
     users_data = [
-        AuthUserCreate(
+        AuthUserCreateDB(
             username=duplicate_username,
             email=f"user1_{unique_id}@example.com",
-            password="password1"
+            password="password1",
+            user_id=uuid.uuid4()
         ),
-        AuthUserCreate(
+        AuthUserCreateDB(
             username=duplicate_username,  # 同じユーザー名を使用
             email=f"user2_{unique_id}@example.com",
-            password="password2"
+            password="password2",
+            user_id=uuid.uuid4()
         )
     ]
     
@@ -202,15 +211,17 @@ async def test_create_multiple_auth_users_with_duplicate_email_in_input(db_sessi
     duplicate_email = f"duplicate_{unique_id}@example.com"
     
     users_data = [
-        AuthUserCreate(
+        AuthUserCreateDB(
             username=f"user1_{unique_id}",
             email=duplicate_email,
-            password="password1"
+            password="password1",
+            user_id=uuid.uuid4()
         ),
-        AuthUserCreate(
+        AuthUserCreateDB(
             username=f"user2_{unique_id}",
             email=duplicate_email,  # 同じメールアドレスを使用
-            password="password2"
+            password="password2",
+            user_id=uuid.uuid4()
         )
     ]
     
@@ -232,15 +243,17 @@ async def test_create_multiple_auth_users_with_existing_username(db_session, tes
     
     # 既存のユーザー名を含むユーザーデータを作成
     users_data = [
-        AuthUserCreate(
+        AuthUserCreateDB(
             username=f"new_user1_{unique_id}",
             email=f"new_user1_{unique_id}@example.com",
-            password="password1"
+            password="password1",
+            user_id=uuid.uuid4()
         ),
-        AuthUserCreate(
+        AuthUserCreateDB(
             username=existing_username,  # 既存のユーザー名を使用
             email=f"new_user2_{unique_id}@example.com",
-            password="password2"
+            password="password2",
+            user_id=uuid.uuid4()
         )
     ]
     
@@ -262,15 +275,17 @@ async def test_create_multiple_auth_users_with_existing_email(db_session, test_u
     
     # 既存のメールアドレスを含むユーザーデータを作成
     users_data = [
-        AuthUserCreate(
+        AuthUserCreateDB(
             username=f"new_user1_{unique_id}",
             email=f"new_user1_{unique_id}@example.com",
-            password="password1"
+            password="password1",
+            user_id=uuid.uuid4()
         ),
-        AuthUserCreate(
+        AuthUserCreateDB(
             username=f"new_user2_{unique_id}",
             email=existing_email,  # 既存のメールアドレスを使用
-            password="password2"
+            password="password2",
+            user_id=uuid.uuid4()
         )
     ]
     
@@ -292,10 +307,11 @@ async def test_update_auth_user_with_duplicate_username(db_session, test_user):
     email = f"update_test_{uuid.uuid4().hex[:8]}@example.com"  # 一意のメールアドレス
     password = "password123"
     
-    user_in = AuthUserCreate(
+    user_in = AuthUserCreateDB(
         username=username,
         email=email,
-        password=password
+        password=password,
+        user_id=uuid.uuid4()
     )
     created_user = await auth_user_crud.create(db_session, user_in)
     
@@ -325,10 +341,11 @@ async def test_update_auth_user_with_duplicate_email(db_session, test_user):
     email = f"update_test_{uuid.uuid4().hex[:8]}@example.com"  # 一意のメールアドレス
     password = "password123"
     
-    user_in = AuthUserCreate(
+    user_in = AuthUserCreateDB(
         username=username,
         email=email,
-        password=password
+        password=password,
+        user_id=uuid.uuid4()
     )
     created_user = await auth_user_crud.create(db_session, user_in)
     
@@ -355,10 +372,11 @@ async def test_update_auth_user_with_invalid_email(db_session):
     email = f"update_test_{uuid.uuid4().hex[:8]}@example.com"
     password = "password123"
     
-    user_in = AuthUserCreate(
+    user_in = AuthUserCreateDB(
         username=username,
         email=email,
-        password=password
+        password=password,
+        user_id=uuid.uuid4()
     )
     created_user = await auth_user_crud.create(db_session, user_in)
     
@@ -388,10 +406,11 @@ async def test_update_auth_user_with_too_long_username(db_session):
     email = f"update_test_{uuid.uuid4().hex[:8]}@example.com"
     password = "password123"
     
-    user_in = AuthUserCreate(
+    user_in = AuthUserCreateDB(
         username=username,
         email=email,
-        password=password
+        password=password,
+        user_id=uuid.uuid4()
     )
     created_user = await auth_user_crud.create(db_session, user_in)
     
@@ -421,10 +440,11 @@ async def test_update_auth_user_with_empty_username(db_session):
     email = f"update_test_{uuid.uuid4().hex[:8]}@example.com"
     password = "password123"
     
-    user_in = AuthUserCreate(
+    user_in = AuthUserCreateDB(
         username=username,
         email=email,
-        password=password
+        password=password,
+        user_id=uuid.uuid4()
     )
     created_user = await auth_user_crud.create(db_session, user_in)
     
@@ -454,10 +474,11 @@ async def test_update_password_with_too_long_password(db_session):
     email = f"password_test_{uuid.uuid4().hex[:8]}@example.com"
     password = "password123"
     
-    user_in = AuthUserCreate(
+    user_in = AuthUserCreateDB(
         username=username,
         email=email,
-        password=password
+        password=password,
+        user_id=uuid.uuid4()
     )
     created_user = await auth_user_crud.create(db_session, user_in)
     
@@ -490,10 +511,11 @@ async def test_update_password_with_empty_password(db_session):
     email = f"password_test_{uuid.uuid4().hex[:8]}@example.com"
     password = "password123"
     
-    user_in = AuthUserCreate(
+    user_in = AuthUserCreateDB(
         username=username,
         email=email,
-        password=password
+        password=password,
+        user_id=uuid.uuid4()
     )
     created_user = await auth_user_crud.create(db_session, user_in)
     

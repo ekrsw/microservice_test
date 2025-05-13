@@ -1,8 +1,8 @@
 // 認証関連の処理を行うJavaScriptファイル
 
 // APIのベースURL（実際の環境に合わせて変更してください）
-const AUTH_API_URL = 'http://localhost:8001/api/v1/auth';
-const USER_API_URL = 'http://localhost:8002/api/v1/user';
+const AUTH_API_URL = 'http://localhost:8080/api/v1/auth';
+const USER_API_URL = 'http://localhost:8081/api/v1/user';
 
 // DOMが読み込まれたら実行
 document.addEventListener('DOMContentLoaded', () => {

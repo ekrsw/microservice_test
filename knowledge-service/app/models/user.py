@@ -10,4 +10,5 @@ class User(Base):
     __tablename__ = "users"
 
     username: Mapped[str] = mapped_column(String, nullable=False, unique=True, index=True)
+    full_name: Mapped[Optional[str]] = mapped_column(String, nullable=True, unique=True, index=True)
     user_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False, unique=True, index=True)

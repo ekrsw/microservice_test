@@ -36,6 +36,12 @@ async function fetchUserInfo() {
         // ユーザー情報を表示
         displayUserInfo(userData);
         
+        // トークンからユーザー情報を再取得
+        const token = getAccessToken();
+        if (token) {
+            await refreshUserInfo(token);
+        }
+        
     } catch (error) {
         console.error('ユーザー情報取得エラー:', error);
         userInfoElement.innerHTML = `
@@ -44,6 +50,54 @@ async function fetchUserInfo() {
                 <button onclick="logout()">ログインページに戻る</button>
             </div>
         `;
+    }
+}
+
+// APIからユーザー情報を再取得する関数
+async function refreshUserInfo(token) {
+    try {
+        // JWTトークンからペイロードを取得
+        const tokenParts = token.split('.');
+        if (tokenParts.length !== 3) {
+            throw new Error('無効なトークン形式です');
+        }
+        
+        // Base64デコードしてペイロードを取得
+        const payload = JSON.parse(atob(tokenParts[1]));
+        const userId = payload.user_id;
+        
+        if (!userId) {
+            throw new Error('トークンにユーザーIDが含まれていません');
+        }
+        
+        const USER_API_URL = 'http://localhost:8002/api/v1/user';
+        
+        // /meエンドポイントからユーザー情報を取得
+        const meResponse = await fetch(`${USER_API_URL}/me`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!meResponse.ok) {
+            throw new Error('ユーザー情報の更新に失敗しました');
+        }
+        
+        const userData = await meResponse.json();
+        
+        // ユーザーIDが一致することを確認
+        if (userData.id !== userId) {
+            console.warn('トークンのユーザーIDとAPIレスポンスのIDが一致しません');
+        }
+        
+        localStorage.setItem('userData', JSON.stringify(userData));
+        
+        // 画面を更新
+        displayUserInfo(userData);
+    } catch (error) {
+        console.error('ユーザー情報更新エラー:', error);
+        // エラーが発生しても既存のデータで表示を続行
     }
 }
 
@@ -56,6 +110,7 @@ function displayUserInfo(userData) {
             <div class="user-details">
                 <p><strong>ユーザーID:</strong> ${userData.id}</p>
                 <p><strong>ユーザー名:</strong> ${userData.username}</p>
+                ${userData.full_name ? `<p><strong>氏名:</strong> ${userData.full_name}</p>` : ''}
                 ${userData.email ? `<p><strong>メールアドレス:</strong> ${userData.email}</p>` : ''}
             </div>
         `;
@@ -66,6 +121,11 @@ function displayUserInfo(userData) {
             </div>
         `;
     }
+}
+
+// アクセストークンの取得
+function getAccessToken() {
+    return localStorage.getItem('accessToken');
 }
 
 // ログイン状態のチェック

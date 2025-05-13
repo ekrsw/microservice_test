@@ -63,31 +63,6 @@ class CRUDAuthUser:
                 raise DatabaseIntegrityError("Database integrity error") from e
         return db_obj
     
-    async def create_with_user_id(self, session: AsyncSession, obj_in: AuthUserCreate, user_id: uuid.UUID) -> AuthUser:
-        """
-        user_idを指定してユーザーを作成する
-        
-        Args:
-            session: データベースセッション
-            obj_in: ユーザー作成スキーマ（user_idなし）
-            user_id: user-serviceから受け取ったユーザーID
-            
-        Returns:
-            作成されたユーザー
-        """
-        self.logger.info(f"Creating new user with username: {obj_in.username} and user_id: {user_id}")
-        
-        # AuthUserCreateからAuthUserCreateDBを作成
-        db_obj_in = AuthUserCreateDB(
-            username=obj_in.username,
-            email=obj_in.email,
-            password=obj_in.password,
-            user_id=user_id
-        )
-        
-        # createメソッドを呼び出す
-        return await self.create(session, db_obj_in)
-    
     async def create_multiple(self, session: AsyncSession, obj_in_list: List[AuthUserCreateDB]) -> List[AuthUser]:
         self.logger.info(f"Creating multiple users: {len(obj_in_list)} users")
         # 1. 入力データからusernameとemailのリストを抽出
@@ -293,6 +268,15 @@ class CRUDAuthUser:
         await session.flush()
         # commitはsessionのfinallyで行う
         self.logger.info(f"Successfully deleted user with username: {username}")
+        return db_obj
+
+    async def delete_by_email(self, session: AsyncSession, email: EmailStr) -> AuthUser:
+        self.logger.info(f"Deleting user by email: {email}")
+        db_obj = await self.get_by_email(session, email)
+        await session.delete(db_obj)
+        await session.flush()
+        # commitはsessionのfinallyで行う
+        self.logger.info(f"Successfully deleted user with email: {email}")
         return db_obj
 
 auth_user_crud = CRUDAuthUser()

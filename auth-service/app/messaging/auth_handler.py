@@ -6,7 +6,7 @@ from app.core.logging import app_logger
 from app.core.redis import get_password_from_redis, delete_password_from_redis
 from app.db.session import get_async_session
 from app.crud.auth_user import auth_user_crud
-from app.schemas.auth_user import AuthUserCreate
+from app.schemas.auth_user import AuthUserCreateDB
 
 
 async def handle_user_creation_response(user_data: Dict[str, Any]):
@@ -69,17 +69,17 @@ async def handle_user_creation_response(user_data: Dict[str, Any]):
         async for session in get_async_session():
             try:
                 # ユーザー作成スキーマの作成
-                user_create = AuthUserCreate(
+                user_create = AuthUserCreateDB(
                     username=username,
                     email=email,
-                    password=password
+                    password=password,
+                    user_id=uuid.UUID(user_id)
                 )
                 
                 # ユーザーの作成（user_idを指定）
-                new_user = await auth_user_crud.create_with_user_id(
+                new_user = await auth_user_crud.create(
                     session, 
-                    user_create, 
-                    uuid.UUID(user_id)
+                    user_create
                 )
                 
                 logger.info(f"auth-serviceでユーザーを作成しました: ID={new_user.id}, user_id={new_user.user_id}")

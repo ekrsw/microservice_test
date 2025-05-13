@@ -24,6 +24,7 @@ class CRUDUser:
         try:
             db_obj = User(
                 username=obj_in.username,
+                full_name=obj_in.full_name,
                 email=obj_in.email,
                 is_active=obj_in.is_active,
                 is_superuser=obj_in.is_superuser
@@ -91,6 +92,7 @@ class CRUDUser:
         for obj_in in obj_in_list:
             db_obj = User(
                 username=obj_in.username,
+                full_name=obj_in.full_name,
                 email=obj_in.email,
                 is_active=obj_in.is_active,
                 is_sueruser=obj_in.is_superuser,

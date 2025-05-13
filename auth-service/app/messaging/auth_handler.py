@@ -18,6 +18,29 @@ async def handle_user_creation_response(user_data: Dict[str, Any]):
     """
     logger = app_logger
     logger.info(f"ユーザー作成レスポンスの処理を開始: {user_data}")
+
+    # ステータスの確認
+    status = user_data.get("status")
+    if status == "error":
+        # エラーの場合の処理
+        error_type = user_data.get("error_type")
+        error_message = user_data.get("message")
+        original_request = user_data.get("original_request", {})
+        password_key = original_request.get("password_key")
+
+        logger.error(f"ユーザー作成エラー: {error_type} - {error_message}")
+
+        # Redisからパスワードを削除（クリーンアップ）
+        if password_key:
+            delete_result = await delete_password_from_redis(password_key)
+            if delete_result:
+                logger.info(f"一時保存されたパスワードを削除しました: key={password_key}")
+            else:
+                logger.warning(f"一時保存されたパスワードの削除に失敗しました: key={password_key}")
+        
+        # エラー情報をRedisに保存（フロントエンドからのポーリング用）
+        # 実装例: await save_registration_error_to_redis(original_request.get("username"), error_message)
+        return
     
     try:
         # user_idの取得

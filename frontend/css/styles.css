@@ -1,0 +1,219 @@
+/* 全体のスタイル */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.5;
+    color: #1e293b;
+    background-color: #f1f5f9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    width: 100%;
+    max-width: 400px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
+    padding: 2rem;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: #333;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+/* ロゴのスタイル */
+.logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.logo-img {
+    height: 32px;
+    margin-right: 0.5rem;
+}
+
+.logo-text {
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: #333;
+}
+
+/* フォーム要素のスタイル */
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 400;
+    color: #475569;
+    font-size: 0.875rem;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="email"] {
+    width: 100%;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    color: #475569;
+    background-color: #fff;
+}
+
+input[type="text"]::placeholder,
+input[type="password"]::placeholder,
+input[type="email"]::placeholder {
+    color: #94a3b8;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus {
+    border-color: #3b82f6;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* チェックボックスのスタイル */
+.form-check {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.25rem;
+}
+
+.form-check input[type="checkbox"] {
+    margin-right: 0.5rem;
+    cursor: pointer;
+}
+
+.form-check label {
+    margin-bottom: 0;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+
+button {
+    cursor: pointer;
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    width: 100%;
+    transition: background-color 0.2s;
+    text-align: center;
+    border: none;
+    border-radius: 4px;
+}
+
+/* ログインボタンのスタイル */
+.btn-login {
+    background-color: #0d6efd;
+    color: white;
+}
+
+.btn-login:hover {
+    background-color: #0b5ed7;
+}
+
+/* ダッシュボードのスタイル */
+.dashboard {
+    padding: 1rem;
+}
+
+.user-info {
+    background-color: #f8fafc;
+    border-radius: 4px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid #e2e8f0;
+}
+
+.user-details p {
+    margin-bottom: 0.75rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+}
+
+.user-details p:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.actions {
+    margin-top: 1.5rem;
+}
+
+.btn-logout {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-logout:hover {
+    background-color: #bb2d3b;
+}
+
+/* エラーメッセージのスタイル */
+.error-message {
+    color: #dc3545;
+    background-color: #f8d7da;
+    padding: 0.75rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    text-align: center;
+    display: none;
+    font-size: 0.875rem;
+    border: 1px solid #f5c2c7;
+}
+
+.error-message:not(:empty) {
+    display: block;
+}
+
+.error {
+    color: #dc3545;
+    text-align: center;
+}
+
+/* ローディング表示のスタイル */
+.loading {
+    text-align: center;
+    padding: 1rem;
+    color: #6c757d;
+}
+
+.loading::after {
+    content: "...";
+    animation: dots 1.5s infinite;
+}
+
+@keyframes dots {
+    0%, 20% {
+        content: ".";
+    }
+    40% {
+        content: "..";
+    }
+    60%, 100% {
+        content: "...";
+    }
+}

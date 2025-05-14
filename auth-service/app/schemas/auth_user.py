@@ -1,18 +1,33 @@
 from typing import Optional
 import uuid
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, validator
+import re
 
 
 class AuthUserBase(BaseModel):
     username: Optional[str] = None
     email: Optional[EmailStr] = None
 
+    @validator("username")
+    def username_alphanumeric(cls, v):
+        if v is None:  # Noneの場合はスキップ
+            return v
+        if not re.match(r"^[a-zA-Z0-9]+$", v):
+            raise ValueError("ユーザーネームは半角英数字のみ使用可能です")
+        return v
 
-class AuthUserCreate(BaseModel):
+
+class AuthUserCreate(AuthUserBase):
     username: str = Field(..., min_length=3, max_length=50)
     email: EmailStr
     password: str = Field(..., min_length=1, max_length=16)
     # user_idはregisterエンドポイントでは不要 (user-serviceから提供される)
+
+    @validator("password")
+    def password_alphanumeric(cls, v):
+        if not re.match(r"^[a-zA-Z0-9]+$", v):
+            raise ValueError("パスワードは半角英数字のみ使用可能です")
+        return v
 
 
 # CRUD処理用のスキーマ（user_idが必須）
@@ -20,16 +35,22 @@ class AuthUserCreateDB(AuthUserCreate):
     user_id: uuid.UUID = Field(...)
 
 
-class AuthUserUpdate(BaseModel):
+class AuthUserUpdate(AuthUserBase):
     username: Optional[str] = Field(None, min_length=3, max_length=50)
     email: Optional[EmailStr] = None
     user_id: Optional[uuid.UUID] = None
-    # passowrdは更新しない
+    # passwordは更新しない
 
 
 class AuthUserUpdatePassword(BaseModel):
     current_password: str
     new_password: str = Field(..., min_length=1, max_length=16)
+
+    @validator("new_password")
+    def password_alphanumeric(cls, v):
+        if not re.match(r"^[a-zA-Z0-9]+$", v):
+            raise ValueError("パスワードは半角英数字のみ使用可能です")
+        return v
 
 
 # レスポンスとして返すユーザー情報

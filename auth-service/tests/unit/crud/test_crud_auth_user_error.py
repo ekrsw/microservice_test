@@ -539,3 +539,156 @@ async def test_update_password_with_empty_password(db_session):
     
     # 後片付け
     await auth_user_crud.delete_by_id(db_session, created_user.id)
+
+
+@pytest.mark.asyncio
+async def test_create_auth_user_with_non_alphanumeric_username(db_session, unique_email, unique_password):
+    """半角英数字以外の文字を含むユーザー名でユーザーを作成しようとするとエラーが発生することを確認する"""
+    username = "user name@123"  # スペースと記号を含む
+    email = unique_email
+    password = unique_password
+    
+    with pytest.raises(ValueError) as exc_info:
+        await auth_user_crud.create(
+            db_session,
+            AuthUserCreateDB(
+                username=username,
+                email=email,
+                password=password,
+                user_id=uuid.uuid4()
+            )
+        )
+    
+    # エラーメッセージを確認
+    assert "ユーザーネームは半角英数字のみ使用可能です" in str(exc_info.value)
+
+
+@pytest.mark.asyncio
+async def test_create_auth_user_with_japanese_username(db_session, unique_email, unique_password):
+    """日本語を含むユーザー名でユーザーを作成しようとするとエラーが発生することを確認する"""
+    username = "ユーザー123"  # 日本語を含む
+    email = unique_email
+    password = unique_password
+    
+    with pytest.raises(ValueError) as exc_info:
+        await auth_user_crud.create(
+            db_session,
+            AuthUserCreateDB(
+                username=username,
+                email=email,
+                password=password,
+                user_id=uuid.uuid4()
+            )
+        )
+    
+    # エラーメッセージを確認
+    assert "ユーザーネームは半角英数字のみ使用可能です" in str(exc_info.value)
+
+
+@pytest.mark.asyncio
+async def test_create_auth_user_with_non_alphanumeric_password(db_session, unique_username, unique_email):
+    """半角英数字以外の文字を含むパスワードでユーザーを作成しようとするとエラーが発生することを確認する"""
+    username = unique_username
+    email = unique_email
+    password = "pass word!123"  # スペースと記号を含む
+    
+    with pytest.raises(ValueError) as exc_info:
+        await auth_user_crud.create(
+            db_session,
+            AuthUserCreateDB(
+                username=username,
+                email=email,
+                password=password,
+                user_id=uuid.uuid4()
+            )
+        )
+    
+    # エラーメッセージを確認
+    assert "パスワードは半角英数字のみ使用可能です" in str(exc_info.value)
+
+
+@pytest.mark.asyncio
+async def test_create_auth_user_with_japanese_password(db_session, unique_username, unique_email):
+    """日本語を含むパスワードでユーザーを作成しようとするとエラーが発生することを確認する"""
+    username = unique_username
+    email = unique_email
+    password = "パスワード123"  # 日本語を含む
+    
+    with pytest.raises(ValueError) as exc_info:
+        await auth_user_crud.create(
+            db_session,
+            AuthUserCreateDB(
+                username=username,
+                email=email,
+                password=password,
+                user_id=uuid.uuid4()
+            )
+        )
+    
+    # エラーメッセージを確認
+    assert "パスワードは半角英数字のみ使用可能です" in str(exc_info.value)
+
+
+@pytest.mark.asyncio
+async def test_update_auth_user_with_non_alphanumeric_username(db_session):
+    """半角英数字以外の文字を含むユーザー名に更新しようとするとエラーが発生することを確認する"""
+    # テスト用ユーザーを作成
+    username = f"update_test_{uuid.uuid4().hex[:8]}"
+    email = f"update_test_{uuid.uuid4().hex[:8]}@example.com"
+    password = "password123"
+    
+    user_in = AuthUserCreateDB(
+        username=username,
+        email=email,
+        password=password,
+        user_id=uuid.uuid4()
+    )
+    created_user = await auth_user_crud.create(db_session, user_in)
+    
+    # 半角英数字以外の文字を含むユーザー名
+    invalid_username = "user name@123"  # スペースと記号を含む
+    
+    # エラーが発生することを確認
+    with pytest.raises(ValueError) as exc_info:
+        # AuthUserUpdateのインスタンス化時にバリデーションエラーが発生する
+        update_data = AuthUserUpdate(username=invalid_username)
+    
+    # エラーメッセージを確認
+    assert "ユーザーネームは半角英数字のみ使用可能です" in str(exc_info.value)
+    
+    # 後片付け
+    await auth_user_crud.delete_by_id(db_session, created_user.id)
+
+
+@pytest.mark.asyncio
+async def test_update_password_with_non_alphanumeric_password(db_session):
+    """半角英数字以外の文字を含むパスワードに更新しようとするとエラーが発生することを確認する"""
+    # テスト用ユーザーを作成
+    username = f"password_test_{uuid.uuid4().hex[:8]}"
+    email = f"password_test_{uuid.uuid4().hex[:8]}@example.com"
+    password = "password123"
+    
+    user_in = AuthUserCreateDB(
+        username=username,
+        email=email,
+        password=password,
+        user_id=uuid.uuid4()
+    )
+    created_user = await auth_user_crud.create(db_session, user_in)
+    
+    # 半角英数字以外の文字を含むパスワード
+    invalid_password = "pass word!123"  # スペースと記号を含む
+    
+    # エラーが発生することを確認
+    with pytest.raises(ValueError) as exc_info:
+        # AuthUserUpdatePasswordのインスタンス化時にバリデーションエラーが発生する
+        update_data = AuthUserUpdatePassword(
+            current_password=password,
+            new_password=invalid_password
+        )
+    
+    # エラーメッセージを確認
+    assert "パスワードは半角英数字のみ使用可能です" in str(exc_info.value)
+    
+    # 後片付け
+    await auth_user_crud.delete_by_id(db_session, created_user.id)

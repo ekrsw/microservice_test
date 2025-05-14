@@ -38,7 +38,8 @@ async def db_session(db_engine):
 @pytest.fixture(scope="function")
 def unique_username():
     """ユニークなユーザー名を生成する"""
-    return f"user_{uuid.uuid4()}"
+    # アンダースコアを使わずに英数字のみの組み合わせで生成
+    return f"user{uuid.uuid4().hex[:10]}"
 
 @pytest.fixture(scope="function")
 def unique_email():
@@ -51,8 +52,8 @@ def unique_password():
     # パスワードの長さをランダムに決定（1～16文字）
     length = random.randint(1, 16)
     
-    # 使用する文字セット
-    characters = string.ascii_letters + string.digits + string.punctuation
+    # 使用する文字セット（半角英数字のみ）
+    characters = string.ascii_letters + string.digits
     
     # ランダムなパスワードを生成
     password = ''.join(random.choice(characters) for _ in range(length))

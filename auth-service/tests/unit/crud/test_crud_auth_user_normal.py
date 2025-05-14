@@ -69,10 +69,10 @@ async def test_create_multiple_auth_users(db_session):
         # ユニークなシード値
         unique_id = str(uuid.uuid4())[:8]  # UUIDの最初の8文字だけ使用
         
-        username = f"test_user_{i}_{unique_id}"
+        username = f"testuser{i}{unique_id}"
         email = f"test_user_{i}_{unique_id}@example.com"
-        # 16文字以内のパスワードを生成
-        password = f"pass_{i}_{unique_id}"
+        # 16文字以内のパスワードを生成（半角英数字のみ）
+        password = f"pass{i}{unique_id}"
         
         expected_usernames.append(username)
         expected_emails.append(email)
@@ -188,9 +188,9 @@ async def test_get_all_auth_users(db_session):
         # ユニークな識別子
         unique_id = str(uuid.uuid4())[:8]
         
-        username = f"get_all_test_user_{i}_{unique_id}"
+        username = f"getalltestuser{i}{unique_id}"
         email = f"get_all_test_{i}_{unique_id}@example.com"
-        password = f"pass_{i}_{unique_id}"  # 16文字以内
+        password = f"pass{i}{unique_id}"  # 16文字以内（半角英数字のみ）
         
         user_in = AuthUserCreateDB(
             username=username,
@@ -247,8 +247,8 @@ async def test_get_auth_user_by_nonexistent_id(db_session):
 @pytest.mark.asyncio
 async def test_get_auth_user_by_nonexistent_username(db_session):
     """存在しないユーザー名でユーザーを取得しようとした場合、UserNotFoundErrorが返ることを確認する"""
-    # 存在しないユーザー名を生成（ランダムなUUIDを使用して一意性を確保）
-    nonexistent_username = f"nonexistent_user_{uuid.uuid4()}"
+    # 存在しないユーザー名を生成（ランダムなUUIDを使用して一意性を確保、半角英数字のみ）
+    nonexistent_username = f"nonexistentuser{uuid.uuid4().hex[:10]}"
     
     # 事前確認：このユーザー名が実際にDBに存在しないことを確認
     all_users = await auth_user_crud.get_all(db_session)
@@ -301,8 +301,8 @@ async def test_update_auth_user_username(db_session, unique_username, unique_ema
     )
     created_user = await auth_user_crud.create(db_session, user_in)
     
-    # 新しいユーザー名を生成
-    new_username = f"updated_{uuid.uuid4().hex[:10]}"
+    # 新しいユーザー名を生成（半角英数字のみ）
+    new_username = f"updated{uuid.uuid4().hex[:10]}"
     
     # ユーザー名を更新
     update_data = AuthUserUpdate(username=new_username)
@@ -473,8 +473,8 @@ async def test_update_auth_user_username_by_username(db_session, unique_username
     )
     created_user = await auth_user_crud.create(db_session, user_in)
     
-    # 新しいユーザー名を生成
-    new_username = f"updated_username_{uuid.uuid4().hex[:10]}"
+    # 新しいユーザー名を生成（半角英数字のみ）
+    new_username = f"updatedusername{uuid.uuid4().hex[:10]}"
     
     # ユーザー名からユーザー名を更新
     update_data = AuthUserUpdate(username=new_username)

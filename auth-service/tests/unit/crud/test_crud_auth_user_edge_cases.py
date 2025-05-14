@@ -14,10 +14,10 @@ from app.schemas.auth_user import AuthUserCreate, AuthUserCreateDB, AuthUserUpda
 @pytest.mark.asyncio
 async def test_create_multiple_users_transaction_rollback(db_session, monkeypatch):
     """複数ユーザー作成時に一部が失敗した場合、トランザクション全体がロールバックされることを確認する"""
-    # 有効なユーザーデータを作成
+    # 有効なユーザーデータを作成（半角英数字のみのユーザー名）
     valid_users = [
         AuthUserCreateDB(
-            username=f"valid_user_{i}_{uuid.uuid4().hex[:8]}",
+            username=f"validuser{i}{uuid.uuid4().hex[:8]}",
             email=f"valid_user_{i}_{uuid.uuid4().hex[:8]}@example.com",
             password="password123",
             user_id=uuid.uuid4()
@@ -58,10 +58,10 @@ async def test_create_multiple_users_with_duplicate_constraint(db_session, uniqu
     # 既存のユーザー名を取得
     existing_username = test_user.username
     
-    # 有効なユーザーデータを作成
+    # 有効なユーザーデータを作成（半角英数字のみのユーザー名）
     valid_users = [
         AuthUserCreateDB(
-            username=f"valid_user_{i}_{uuid.uuid4().hex[:8]}",
+            username=f"validuser{i}{uuid.uuid4().hex[:8]}",
             email=f"valid_user_{i}_{uuid.uuid4().hex[:8]}@example.com",
             password="password123",
             user_id=uuid.uuid4()
@@ -123,7 +123,7 @@ async def test_unexpected_exception_handling(db_session, monkeypatch):
     
     # ユーザー更新操作を実行
     user_id = uuid.uuid4()
-    update_data = AuthUserUpdate(username="new_username")
+    update_data = AuthUserUpdate(username="newusername")
     
     with pytest.raises(Exception) as exc_info:
         await auth_user_crud.update_by_id(db_session, user_id, update_data)
@@ -150,8 +150,8 @@ async def test_session_rollback_on_exception(db_session):
     
     # 2. 最初のトランザクションでユーザーを作成
     async with TestingSessionLocal() as session1:
-        # ユーザー情報を準備
-        username = f"rollback_test_{uuid.uuid4().hex[:8]}"
+        # ユーザー情報を準備（半角英数字のみのユーザー名）
+        username = f"rollbacktest{uuid.uuid4().hex[:8]}"
         email = f"rollback_test_{uuid.uuid4().hex[:8]}@example.com"
         password = "password123"
         
@@ -173,8 +173,8 @@ async def test_session_rollback_on_exception(db_session):
         # ユーザーを取得
         db_user = await auth_user_crud.get_by_id(session2, user_id)
         
-        # ユーザー名を更新
-        updated_username = "updated_username"
+        # ユーザー名を更新（半角英数字のみ）
+        updated_username = "updatedusername"
         db_user.username = updated_username
         
         # 変更をロールバック

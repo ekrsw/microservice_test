@@ -306,7 +306,53 @@ async def get_user_me(current_user: AuthUserResponse = Depends(get_current_user)
     """
     return current_user
 
-@router.put("/users/{auth_user_id}")
+@router.post("/password/change", status_code=status.HTTP_200_OK)
+async def change_password(
+    request: Request,
+    password_update: AuthUserUpdatePassword,
+    current_user: AuthUserResponse = Depends(get_current_user),
+    async_session: AsyncSession = Depends(get_async_session)
+) -> Any:
+    """
+    認証済みユーザーのパスワードを変更するエンドポイント
+    - 現在のパスワードと新しいパスワードが必要
+    - 現在のパスワードが正しいことを検証
+    """
+    logger = get_request_logger(request)
+    logger.info(f"パスワード変更リクエスト: ユーザーID={current_user.id}")
+
+    try:
+        # トランザクション開始
+        async with async_session.begin():
+            # パスワード更新処理
+            await auth_user_crud.update_password(
+                session=async_session,
+                id=current_user.id,
+                obj_in=password_update
+            )
+            
+            logger.info(f"パスワード変更成功: ユーザーID={current_user.id}")
+            
+            return {
+                "detail": "パスワードが正常に変更されました"
+            }
+            
+    except ValueError as e:
+        # 現在のパスワードが間違っている場合
+        logger.warning(f"パスワード変更失敗: ユーザーID={current_user.id}, 理由: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="現在のパスワードが正しくありません"
+        )
+    except Exception as e:
+        # その他の例外
+        logger.error(f"パスワード変更中にエラー発生: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"パスワード変更処理中にエラーが発生しました: {str(e)}"
+        )
+
+@router.put("/update_user/{auth_user_id}")
 async def update_user(auth_user_id: uuid.UUID,
                       user_update: AuthUserUpdate,
                       async_session: AsyncSession = Depends(get_async_session)):

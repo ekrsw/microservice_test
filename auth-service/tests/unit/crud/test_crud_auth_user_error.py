@@ -104,7 +104,7 @@ async def test_create_auth_user_with_duplicate_username(db_session, test_user, u
 @pytest.mark.asyncio
 async def test_create_auth_user_with_duplicate_email(db_session, test_user, unique_password):
     """重複したメールアドレスでユーザーを作成しようとするとエラーが発生することを確認する"""
-    username = "test_user2"
+    username = "testuser2"  # 半角英数字のみ
     email = test_user.email
     password = unique_password
     user_in = AuthUserCreateDB(
@@ -176,8 +176,8 @@ async def test_create_multiple_auth_users_with_duplicate_username_in_input(db_se
     # ユニークなシード値
     unique_id = str(uuid.uuid4())[:8]
     
-    # 重複するユーザー名を持つユーザーデータを作成
-    duplicate_username = f"duplicate_user_{unique_id}"
+    # 重複するユーザー名を持つユーザーデータを作成（半角英数字のみ）
+    duplicate_username = f"duplicateuser{unique_id}"
     
     users_data = [
         AuthUserCreateDB(
@@ -212,13 +212,13 @@ async def test_create_multiple_auth_users_with_duplicate_email_in_input(db_sessi
     
     users_data = [
         AuthUserCreateDB(
-            username=f"user1_{unique_id}",
+            username=f"user1{unique_id}",  # 半角英数字のみ
             email=duplicate_email,
             password="password1",
             user_id=uuid.uuid4()
         ),
         AuthUserCreateDB(
-            username=f"user2_{unique_id}",
+            username=f"user2{unique_id}",  # 半角英数字のみ
             email=duplicate_email,  # 同じメールアドレスを使用
             password="password2",
             user_id=uuid.uuid4()
@@ -244,7 +244,7 @@ async def test_create_multiple_auth_users_with_existing_username(db_session, tes
     # 既存のユーザー名を含むユーザーデータを作成
     users_data = [
         AuthUserCreateDB(
-            username=f"new_user1_{unique_id}",
+            username=f"newuser1{unique_id}",  # 半角英数字のみ
             email=f"new_user1_{unique_id}@example.com",
             password="password1",
             user_id=uuid.uuid4()
@@ -276,13 +276,13 @@ async def test_create_multiple_auth_users_with_existing_email(db_session, test_u
     # 既存のメールアドレスを含むユーザーデータを作成
     users_data = [
         AuthUserCreateDB(
-            username=f"new_user1_{unique_id}",
+            username=f"newuser1{unique_id}",  # 半角英数字のみ
             email=f"new_user1_{unique_id}@example.com",
             password="password1",
             user_id=uuid.uuid4()
         ),
         AuthUserCreateDB(
-            username=f"new_user2_{unique_id}",
+            username=f"newuser2{unique_id}",  # 半角英数字のみ
             email=existing_email,  # 既存のメールアドレスを使用
             password="password2",
             user_id=uuid.uuid4()
@@ -303,7 +303,7 @@ async def test_update_auth_user_with_duplicate_username(db_session, test_user):
     existing_username = test_user.username
     
     # 別のテスト用ユーザーを作成（一意のメールアドレスを使用）
-    username = f"update_test_{uuid.uuid4().hex[:8]}"
+    username = f"updatetest{uuid.uuid4().hex[:8]}"  # 半角英数字のみ
     email = f"update_test_{uuid.uuid4().hex[:8]}@example.com"  # 一意のメールアドレス
     password = "password123"
     
@@ -337,7 +337,7 @@ async def test_update_auth_user_with_duplicate_email(db_session, test_user):
     existing_email = test_user.email
     
     # 別のテスト用ユーザーを作成（一意のユーザー名とメールアドレスを使用）
-    username = f"update_test_{uuid.uuid4().hex[:8]}"
+    username = f"updatetest{uuid.uuid4().hex[:8]}"  # 半角英数字のみ
     email = f"update_test_{uuid.uuid4().hex[:8]}@example.com"  # 一意のメールアドレス
     password = "password123"
     
@@ -368,7 +368,7 @@ async def test_update_auth_user_with_duplicate_email(db_session, test_user):
 async def test_update_auth_user_with_invalid_email(db_session):
     """無効なメールアドレスに更新しようとするとエラーが発生することを確認する"""
     # テスト用ユーザーを作成
-    username = f"update_test_{uuid.uuid4().hex[:8]}"
+    username = f"updatetest{uuid.uuid4().hex[:8]}"  # 半角英数字のみ
     email = f"update_test_{uuid.uuid4().hex[:8]}@example.com"
     password = "password123"
     
@@ -402,7 +402,7 @@ async def test_update_auth_user_with_invalid_email(db_session):
 async def test_update_auth_user_with_too_long_username(db_session):
     """長すぎるユーザー名に更新しようとするとエラーが発生することを確認する"""
     # テスト用ユーザーを作成
-    username = f"update_test_{uuid.uuid4().hex[:8]}"
+    username = f"updatetest{uuid.uuid4().hex[:8]}"  # 半角英数字のみ
     email = f"update_test_{uuid.uuid4().hex[:8]}@example.com"
     password = "password123"
     
@@ -436,7 +436,7 @@ async def test_update_auth_user_with_too_long_username(db_session):
 async def test_update_auth_user_with_empty_username(db_session):
     """空のユーザー名に更新しようとするとエラーが発生することを確認する"""
     # テスト用ユーザーを作成
-    username = f"update_test_{uuid.uuid4().hex[:8]}"
+    username = f"updatetest{uuid.uuid4().hex[:8]}"  # 半角英数字のみ
     email = f"update_test_{uuid.uuid4().hex[:8]}@example.com"
     password = "password123"
     
@@ -470,7 +470,7 @@ async def test_update_auth_user_with_empty_username(db_session):
 async def test_update_password_with_too_long_password(db_session):
     """長すぎるパスワードに更新しようとするとエラーが発生することを確認する"""
     # テスト用ユーザーを作成
-    username = f"password_test_{uuid.uuid4().hex[:8]}"
+    username = f"passwordtest{uuid.uuid4().hex[:8]}"  # 半角英数字のみ
     email = f"password_test_{uuid.uuid4().hex[:8]}@example.com"
     password = "password123"
     
@@ -507,7 +507,7 @@ async def test_update_password_with_too_long_password(db_session):
 async def test_update_password_with_empty_password(db_session):
     """空のパスワードに更新しようとした場合の挙動を確認する"""
     # テスト用ユーザーを作成
-    username = f"password_test_{uuid.uuid4().hex[:8]}"
+    username = f"passwordtest{uuid.uuid4().hex[:8]}"  # 半角英数字のみ
     email = f"password_test_{uuid.uuid4().hex[:8]}@example.com"
     password = "password123"
     
@@ -633,7 +633,7 @@ async def test_create_auth_user_with_japanese_password(db_session, unique_userna
 async def test_update_auth_user_with_non_alphanumeric_username(db_session):
     """半角英数字以外の文字を含むユーザー名に更新しようとするとエラーが発生することを確認する"""
     # テスト用ユーザーを作成
-    username = f"update_test_{uuid.uuid4().hex[:8]}"
+    username = f"updatetest{uuid.uuid4().hex[:8]}"  # 半角英数字のみ
     email = f"update_test_{uuid.uuid4().hex[:8]}@example.com"
     password = "password123"
     
@@ -664,7 +664,7 @@ async def test_update_auth_user_with_non_alphanumeric_username(db_session):
 async def test_update_password_with_non_alphanumeric_password(db_session):
     """半角英数字以外の文字を含むパスワードに更新しようとするとエラーが発生することを確認する"""
     # テスト用ユーザーを作成
-    username = f"password_test_{uuid.uuid4().hex[:8]}"
+    username = f"passwordtest{uuid.uuid4().hex[:8]}"  # 半角英数字のみ
     email = f"password_test_{uuid.uuid4().hex[:8]}@example.com"
     password = "password123"
     

@@ -391,7 +391,7 @@ async def test_update_auth_user_password(db_session, unique_username, unique_ema
     )
     created_user = await auth_user_crud.create(db_session, user_in)
     
-    # 新しいパスワードを生成
+    # 新しいパスワードを生成（半角英数字のみ）
     new_password = "newpassword456"
     
     # パスワードを更新
@@ -413,7 +413,7 @@ async def test_update_auth_user_password(db_session, unique_username, unique_ema
     with pytest.raises(ValueError, match="Current password is incorrect"):
         wrong_update = AuthUserUpdatePassword(
             current_password="wrong_password",
-            new_password="another_password"
+            new_password="anotherpassword"  # 半角英数字のみ
         )
         await auth_user_crud.update_password(db_session, created_user.id, wrong_update)
     

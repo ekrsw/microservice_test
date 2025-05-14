@@ -1,6 +1,6 @@
 from typing import Optional
 import uuid
-from pydantic import BaseModel, EmailStr, Field, validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 import re
 
 
@@ -8,7 +8,7 @@ class AuthUserBase(BaseModel):
     username: Optional[str] = None
     email: Optional[EmailStr] = None
 
-    @validator("username")
+    @field_validator("username", mode="after")
     def username_alphanumeric(cls, v):
         if v is None:  # Noneの場合はスキップ
             return v
@@ -23,7 +23,7 @@ class AuthUserCreate(AuthUserBase):
     password: str = Field(..., min_length=1, max_length=16)
     # user_idはregisterエンドポイントでは不要 (user-serviceから提供される)
 
-    @validator("password")
+    @field_validator("password", mode="after")
     def password_alphanumeric(cls, v):
         if not re.match(r"^[a-zA-Z0-9]+$", v):
             raise ValueError("パスワードは半角英数字のみ使用可能です")
@@ -46,7 +46,7 @@ class AuthUserUpdatePassword(BaseModel):
     current_password: str
     new_password: str = Field(..., min_length=1, max_length=16)
 
-    @validator("new_password")
+    @field_validator("new_password", mode="after")
     def password_alphanumeric(cls, v):
         if not re.match(r"^[a-zA-Z0-9]+$", v):
             raise ValueError("パスワードは半角英数字のみ使用可能です")

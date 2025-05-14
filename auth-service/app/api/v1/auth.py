@@ -35,6 +35,7 @@ from app.messaging.rabbitmq import (
 )
 from app.schemas.auth_user import (
     AuthUserCreate,
+    AuthUserUpdatePassword,
     AuthUserUpdate,
     AuthUserResponse,
     LogoutRequest,
@@ -322,21 +323,19 @@ async def change_password(
     logger.info(f"パスワード変更リクエスト: ユーザーID={current_user.id}")
 
     try:
-        # トランザクション開始
-        async with async_session.begin():
-            # パスワード更新処理
-            await auth_user_crud.update_password(
-                session=async_session,
-                id=current_user.id,
-                obj_in=password_update
-            )
-            
-            logger.info(f"パスワード変更成功: ユーザーID={current_user.id}")
-            
-            return {
-                "detail": "パスワードが正常に変更されました"
-            }
-            
+        # パスワード更新処理（トランザクションは get_async_session で管理されている）
+        await auth_user_crud.update_password(
+            session=async_session,
+            id=current_user.id,
+            obj_in=password_update
+        )
+        
+        logger.info(f"パスワード変更成功: ユーザーID={current_user.id}")
+        
+        return {
+            "detail": "パスワードが正常に変更されました"
+        }
+        
     except ValueError as e:
         # 現在のパスワードが間違っている場合
         logger.warning(f"パスワード変更失敗: ユーザーID={current_user.id}, 理由: {str(e)}")

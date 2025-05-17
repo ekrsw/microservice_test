@@ -6,9 +6,11 @@ from app.crud.exceptions import (
     UserNotFoundError,
     DuplicateUsernameError,
     DuplicateEmailError,
-    DatabaseQueryError
+    DatabaseQueryError,
+    DatabaseIntegrityError
 )
-from app.schemas.auth_user import AuthUserCreate, AuthUserCreateDB, AuthUserUpdate
+from app.schemas.auth_user import AuthUserCreate, AuthUserCreateDB, AuthUserUpdate, AuthUserUpdatePassword
+from pydantic import EmailStr
 
 
 @pytest.mark.asyncio
@@ -192,3 +194,211 @@ async def test_session_rollback_on_exception(db_session):
         # 後片付け
         await auth_user_crud.delete_by_id(session3, user_id)
         await session3.commit()
+
+
+@pytest.mark.asyncio
+async def test_get_auth_user_by_user_id(db_session, unique_username, unique_email, unique_password):
+    """user_idを使用してユーザーを取得できることをテストする"""
+    # テスト用のユーザーを作成
+    username = unique_username
+    email = unique_email
+    password = unique_password
+    user_id = uuid.uuid4()
+    
+    # ユーザーを作成
+    user_in = AuthUserCreateDB(
+        username=username,
+        email=email,
+        password=password,
+        user_id=user_id
+    )
+    created_user = await auth_user_crud.create(db_session, user_in)
+    
+    # user_idでユーザーを取得
+    retrieved_user = await auth_user_crud.get_by_user_id(db_session, user_id)
+    
+    # 取得したユーザーが正しいことを確認
+    assert retrieved_user is not None
+    assert retrieved_user.id == created_user.id
+    assert retrieved_user.username == username
+    assert retrieved_user.email == email
+    assert retrieved_user.user_id == user_id
+    
+    # 後片付け
+    await auth_user_crud.delete_by_id(db_session, created_user.id)
+
+
+@pytest.mark.asyncio
+async def test_get_auth_user_by_nonexistent_user_id(db_session):
+    """存在しないuser_idでユーザーを取得しようとした場合のエラー処理をテストする"""
+    # 存在しないUUID（ランダムに生成）
+    nonexistent_user_id = uuid.uuid4()
+    
+    # 存在しないuser_idでユーザーを取得しようとする
+    try:
+        await auth_user_crud.get_by_user_id(db_session, nonexistent_user_id)
+        assert False, "Expected UserNotFoundError but no exception was raised"
+    except UserNotFoundError as e:
+        # エラーメッセージの検証
+        assert str(nonexistent_user_id) in str(e)
+    except Exception as e:
+        assert False, f"Expected UserNotFoundError but got {type(e).__name__}: {str(e)}"
+
+
+@pytest.mark.asyncio
+async def test_delete_auth_user_by_email(db_session, unique_username, unique_email, unique_password):
+    """メールアドレスからユーザーを削除できることをテストする"""
+    # テスト用のユーザーを作成
+    username = unique_username
+    email = unique_email
+    password = unique_password
+    
+    # ユーザーを作成
+    user_in = AuthUserCreateDB(
+        username=username,
+        email=email,
+        password=password,
+        user_id=uuid.uuid4()
+    )
+    created_user = await auth_user_crud.create(db_session, user_in)
+    
+    # ユーザーが作成されたことを確認
+    db_user = await auth_user_crud.get_by_email(db_session, email)
+    assert db_user is not None
+    assert db_user.id == created_user.id
+    
+    # メールアドレスを使ってユーザーを削除
+    deleted_user = await auth_user_crud.delete_by_email(db_session, email)
+    
+    # 削除されたユーザーの情報を確認
+    assert deleted_user.id == created_user.id
+    assert deleted_user.username == username
+    assert deleted_user.email == email
+    
+    # 実際にDBから削除されたことを確認（メールアドレスで検索）
+    try:
+        result = await auth_user_crud.get_by_email(db_session, email)
+        assert False, "Expected UserNotFoundError but no exception was raised"
+    except UserNotFoundError:
+        pass
+    
+    # IDでも検索できないことを確認
+    try:
+        result = await auth_user_crud.get_by_id(db_session, created_user.id)
+        assert False, "Expected UserNotFoundError but no exception was raised"
+    except UserNotFoundError:
+        pass
+
+
+@pytest.mark.asyncio
+async def test_integrity_error_without_specific_keywords(db_session, monkeypatch):
+    """特定のキーワードを含まないIntegrityErrorが適切に処理されることをテストする"""
+    # テスト用のユーザーデータを準備
+    username = f"testuser{uuid.uuid4().hex[:8]}"
+    email = f"test_user_{uuid.uuid4().hex[:8]}@example.com"
+    password = "password123"
+    user_id = uuid.uuid4()
+    
+    # session.addメソッドをモックして特殊なIntegrityErrorを発生させる
+    original_add = db_session.add
+    
+    # キーワード（usernameやemail）を含まないIntegrityError
+    def mock_add(obj):
+        # セッションへの追加操作でIntegrityErrorを発生させる
+        error = IntegrityError("statement", {}, Exception("General constraint violation"))
+        raise error
+    
+    # addメソッドをモックに置き換え
+    monkeypatch.setattr(db_session, "add", mock_add)
+    
+    # ユーザー作成を試みてDatabaseIntegrityErrorが発生することを確認
+    with pytest.raises(DatabaseIntegrityError) as exc_info:
+        await auth_user_crud.create(
+            db_session,
+            AuthUserCreateDB(
+                username=username,
+                email=email,
+                password=password,
+                user_id=user_id
+            )
+        )
+    
+    # エラーメッセージを確認
+    assert "Database integrity error" in str(exc_info.value)
+    
+    # モックを元に戻す
+    monkeypatch.setattr(db_session, "add", original_add)
+
+
+@pytest.mark.asyncio
+async def test_update_by_id_with_integrity_error(db_session, monkeypatch):
+    """update_by_idメソッドでIntegrityError処理をテストする"""
+    # テスト用のユーザーを作成
+    username = f"updatetest{uuid.uuid4().hex[:8]}"
+    email = f"update_test_{uuid.uuid4().hex[:8]}@example.com"
+    password = "password123"
+    
+    user_in = AuthUserCreateDB(
+        username=username,
+        email=email,
+        password=password,
+        user_id=uuid.uuid4()
+    )
+    created_user = await auth_user_crud.create(db_session, user_in)
+    
+    # セッションのflushメソッドをモックしてIntegrityErrorを発生させる
+    original_flush = db_session.flush
+    
+    # テストケース1: usernameキーワードを含むIntegrityError
+    async def mock_flush_username(*args, **kwargs):
+        # キーワード「username」を含むエラーメッセージのIntegrityErrorを発生させる
+        error = IntegrityError("statement", {}, Exception("Duplicate entry for username"))
+        raise error
+    
+    # flushメソッドをモックに置き換え
+    monkeypatch.setattr(db_session, "flush", mock_flush_username)
+    
+    # ユーザー更新を試みてDuplicateUsernameErrorが発生することを確認
+    with pytest.raises(DuplicateUsernameError) as exc_info:
+        update_data = AuthUserUpdate(username="newusername")
+        await auth_user_crud.update_by_id(db_session, created_user.id, update_data)
+    
+    # エラーメッセージを確認
+    assert "Username already exists" in str(exc_info.value)
+    
+    # テストケース2: emailキーワードを含むIntegrityError
+    async def mock_flush_email(*args, **kwargs):
+        # キーワード「email」を含むエラーメッセージのIntegrityErrorを発生させる
+        error = IntegrityError("statement", {}, Exception("Duplicate entry for email"))
+        raise error
+    
+    # flushメソッドをモックに置き換え
+    monkeypatch.setattr(db_session, "flush", mock_flush_email)
+    
+    # ユーザー更新を試みてDuplicateEmailErrorが発生することを確認
+    with pytest.raises(DuplicateEmailError) as exc_info:
+        update_data = AuthUserUpdate(email="newemail@example.com")
+        await auth_user_crud.update_by_id(db_session, created_user.id, update_data)
+    
+    # エラーメッセージを確認
+    assert "Email already exists" in str(exc_info.value)
+    
+    # テストケース3: 特定のキーワードを含まないIntegrityError
+    async def mock_flush_general(*args, **kwargs):
+        # 特定のキーワードを含まないIntegrityErrorを発生させる
+        error = IntegrityError("statement", {}, Exception("General constraint violation"))
+        raise error
+    
+    # flushメソッドをモックに置き換え
+    monkeypatch.setattr(db_session, "flush", mock_flush_general)
+    
+    # ユーザー更新を試みてDatabaseIntegrityErrorが発生することを確認
+    with pytest.raises(DatabaseIntegrityError) as exc_info:
+        update_data = AuthUserUpdate(username="anotheruser")
+        await auth_user_crud.update_by_id(db_session, created_user.id, update_data)
+    
+    # エラーメッセージを確認
+    assert "Database integrity error" in str(exc_info.value)
+    
+    # モックを元に戻す
+    monkeypatch.setattr(db_session, "flush", original_flush)

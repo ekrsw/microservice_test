@@ -164,6 +164,30 @@ async def test_blacklist_token_invalid():
 
 
 @pytest.mark.asyncio
+async def test_blacklist_token_exception():
+    """トークンのブラックリスト登録中に例外が発生した場合のテスト"""
+    user_id = "test_user_id"
+    data = {"sub": user_id}
+    
+    # 有効なトークンを生成
+    token = await create_access_token(data)
+    
+    # Redisクライアントをモックし、例外を発生させる
+    redis_mock = AsyncMock()
+    redis_mock.setex = AsyncMock(side_effect=Exception("Redis connection error"))
+    redis_mock.aclose = AsyncMock()
+    
+    # redis.from_urlをモック
+    with patch("redis.asyncio.from_url", return_value=redis_mock):
+        # トークンをブラックリストに登録（例外が発生するはず）
+        result = await blacklist_token(token)
+        assert result is False  # 例外が発生した場合はFalseを返すはず
+        
+        # Redisのsetexが呼び出されたことを確認
+        redis_mock.setex.assert_called_once()
+
+
+@pytest.mark.asyncio
 async def test_is_token_blacklisted():
     """トークンのブラックリストチェックテスト"""
     # テスト用のペイロード
@@ -320,6 +344,33 @@ async def test_verify_refresh_token():
             # 有効期限切れのトークンでJWTErrorが発生することを確認
             with pytest.raises(jwt.JWTError):
                 await verify_refresh_token(token)
+
+
+@pytest.mark.asyncio
+async def test_verify_refresh_token_json_error():
+    """リフレッシュトークンのデータが不正なJSON形式の場合のテスト"""
+    token = "test_refresh_token"
+    
+    # 不正なJSON形式のデータ
+    invalid_json_data = b"{invalid_json: data"
+    
+    # Redisクライアントをモック
+    redis_mock = AsyncMock()
+    redis_mock.get = AsyncMock(return_value=invalid_json_data)
+    redis_mock.aclose = AsyncMock()
+    
+    # redis.from_urlをモック
+    with patch("redis.asyncio.from_url", return_value=redis_mock):
+        # 不正なJSON形式のデータを返す場合
+        result = await verify_refresh_token(token)
+        
+        # JSONデコードエラーが発生し、Noneが返されるはず
+        assert result is None
+        
+        # Redisのgetが呼び出されたことを確認
+        redis_mock.get.assert_called_once_with(f"refresh_token:{token}")
+        # acloseが呼び出されたことを確認
+        redis_mock.aclose.assert_called_once()
 
 
 @pytest.mark.asyncio

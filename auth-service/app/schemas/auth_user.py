@@ -12,8 +12,8 @@ class AuthUserBase(BaseModel):
     def username_alphanumeric(cls, v):
         if v is None:  # Noneの場合はスキップ
             return v
-        if not re.match(r"^[a-zA-Z0-9]+$", v):
-            raise ValueError("ユーザーネームは半角英数字のみ使用可能です")
+        if not re.match(r"^[a-zA-Z0-9_]+$", v):
+            raise ValueError("ユーザーネームは半角英数字とアンダースコア(_)のみ使用可能です")
         return v
 
 

@@ -36,6 +36,10 @@ class TestAuthUserBase:
         """username_alphanumericバリデータの有効ケースのテスト"""
         user = AuthUserBase(username="test123")
         assert user.username == "test123"
+        
+        # アンダースコアを含むユーザー名も有効であることを確認
+        user_with_underscore = AuthUserBase(username="test_user_123")
+        assert user_with_underscore.username == "test_user_123"
     
     def test_username_alphanumeric_validator_with_none(self):
         """username_alphanumericバリデータでNoneが渡された場合のテスト"""
@@ -46,11 +50,11 @@ class TestAuthUserBase:
         """username_alphanumericバリデータの無効ケースのテスト"""
         with pytest.raises(ValidationError) as excinfo:
             AuthUserBase(username="test-user")  # ハイフンを含む
-        assert "ユーザーネームは半角英数字のみ使用可能です" in str(excinfo.value)
+        assert "ユーザーネームは半角英数字とアンダースコア(_)のみ使用可能です" in str(excinfo.value)
         
         with pytest.raises(ValidationError) as excinfo:
             AuthUserBase(username="テストユーザー")  # 日本語
-        assert "ユーザーネームは半角英数字のみ使用可能です" in str(excinfo.value)
+        assert "ユーザーネームは半角英数字とアンダースコア(_)のみ使用可能です" in str(excinfo.value)
 
 
 class TestAuthUserCreate:
@@ -264,7 +268,7 @@ class TestAuthUserUpdate:
         # 無効な文字を含むユーザー名
         with pytest.raises(ValidationError) as excinfo:
             AuthUserUpdate(username="test-user")  # ハイフンを含む
-        assert "ユーザーネームは半角英数字のみ使用可能です" in str(excinfo.value)
+        assert "ユーザーネームは半角英数字とアンダースコア(_)のみ使用可能です" in str(excinfo.value)
 
 
 class TestAuthUserUpdatePassword:

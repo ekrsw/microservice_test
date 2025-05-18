@@ -560,7 +560,7 @@ async def test_create_auth_user_with_non_alphanumeric_username(db_session, uniqu
         )
     
     # エラーメッセージを確認
-    assert "ユーザーネームは半角英数字のみ使用可能です" in str(exc_info.value)
+    assert "ユーザーネームは半角英数字とアンダースコア(_)のみ使用可能です" in str(exc_info.value)
 
 
 @pytest.mark.asyncio
@@ -582,7 +582,7 @@ async def test_create_auth_user_with_japanese_username(db_session, unique_email,
         )
     
     # エラーメッセージを確認
-    assert "ユーザーネームは半角英数字のみ使用可能です" in str(exc_info.value)
+    assert "ユーザーネームは半角英数字とアンダースコア(_)のみ使用可能です" in str(exc_info.value)
 
 
 @pytest.mark.asyncio
@@ -654,7 +654,7 @@ async def test_update_auth_user_with_non_alphanumeric_username(db_session):
         update_data = AuthUserUpdate(username=invalid_username)
     
     # エラーメッセージを確認
-    assert "ユーザーネームは半角英数字のみ使用可能です" in str(exc_info.value)
+    assert "ユーザーネームは半角英数字とアンダースコア(_)のみ使用可能です" in str(exc_info.value)
     
     # 後片付け
     await auth_user_crud.delete_by_id(db_session, created_user.id)

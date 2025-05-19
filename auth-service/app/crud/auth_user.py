@@ -278,5 +278,49 @@ class CRUDAuthUser:
         # commitはsessionのfinallyで行う
         self.logger.info(f"Successfully deleted user with email: {email}")
         return db_obj
+    
+    async def delete_by_user_id(self, session: AsyncSession, user_id: str) -> AuthUser:
+        """
+        user_idに基づいてユーザーを削除する
+        
+        Args:
+            session: データベースセッション
+            user_id: ユーザーID (文字列またはUUID)
+            
+        Returns:
+            削除されたユーザー
+        """
+        self.logger.info(f"Deleting user by user_id: {user_id}")
+        # 文字列からUUIDへの変換
+        if isinstance(user_id, str):
+            user_id = uuid.UUID(user_id)
+        db_obj = await self.get_by_user_id(session, user_id)
+        await session.delete(db_obj)
+        await session.flush()
+        # commitはsessionのfinallyで行う
+        self.logger.info(f"Successfully deleted user with user_id: {user_id}")
+        return db_obj
+    
+    async def activate_user(self, session: AsyncSession, user_id: str) -> AuthUser:
+        """
+        ユーザーを有効化する
+        
+        Args:
+            session: データベースセッション
+            user_id: ユーザーID (文字列またはUUID)
+            
+        Returns:
+            有効化されたユーザー
+        """
+        self.logger.info(f"Activating user with user_id: {user_id}")
+        # 文字列からUUIDへの変換
+        if isinstance(user_id, str):
+            user_id = uuid.UUID(user_id)
+        db_obj = await self.get_by_user_id(session, user_id)
+        db_obj.is_active = True
+        await session.flush()
+        # commitはsessionのfinallyで行う
+        self.logger.info(f"Successfully activated user with user_id: {user_id}")
+        return db_obj
 
 auth_user_crud = CRUDAuthUser()

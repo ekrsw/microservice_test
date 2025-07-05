@@ -1,0 +1,201 @@
+@startuml Auth Service Sequence Diagrams
+
+title Auth Service - シーケンス図
+
+' ========================================
+' 1. ユーザー登録フロー
+' ========================================
+
+group ユーザー登録フロー
+    participant Client as C
+    participant AuthService as AS
+    participant Redis as R
+    participant RabbitMQ as MQ
+    participant UserService as US
+    participant Database as DB
+
+    C -> AS: POST /auth/register\n{username, email, password}
+    
+    note over AS: バリデーション実行\n- ユーザー名形式チェック\n- メール形式チェック\n- パスワード形式チェック
+    
+    AS -> R: パスワードを一時保存\nsave_password_to_redis()
+    R --> AS: password_key
+    
+    AS -> MQ: ユーザー作成イベント発行\npublish_user_created()\n{username, email, password_key}
+    
+    AS --> C: 202 Accepted\n{message: "リクエスト受付"}
+    
+    note over MQ: 非同期処理開始
+    
+    MQ -> US: ユーザー作成リクエスト
+    US -> US: ユーザー作成処理
+    US -> MQ: ユーザー作成レスポンス\n{user_id, status}
+    
+    MQ -> AS: handle_user_creation_response()
+    
+    alt 作成成功の場合
+        AS -> DB: ユーザー有効化\nactivate_user()
+        AS -> R: パスワード削除\ndelete_password_from_redis()
+    else 作成失敗の場合
+        AS -> DB: ユーザー削除\ndelete_by_user_id()
+        AS -> R: パスワード削除\ndelete_password_from_redis()
+    end
+end
+
+' ========================================
+' 2. ログインフロー
+' ========================================
+
+group ログインフロー
+    participant Client as C
+    participant AuthService as AS
+    participant Database as DB
+    participant Redis as R
+
+    C -> AS: POST /auth/login\n{username, password}
+    
+    AS -> DB: ユーザー検索\nget_by_username()
+    DB --> AS: user_data
+    
+    note over AS: パスワード検証\nverify_password()
+    
+    alt 認証成功
+        AS -> AS: アクセストークン生成\ncreate_access_token()
+        AS -> R: リフレッシュトークン生成・保存\ncreate_refresh_token()
+        
+        AS --> C: 200 OK\n{access_token, refresh_token, token_type}
+    else 認証失敗
+        AS --> C: 401 Unauthorized\n{detail: "認証失敗"}
+    end
+end
+
+' ========================================
+' 3. トークン更新フロー
+' ========================================
+
+group トークン更新フロー
+    participant Client as C
+    participant AuthService as AS
+    participant Redis as R
+    participant Database as DB
+
+    C -> AS: POST /auth/refresh\n{access_token, refresh_token}
+    
+    AS -> R: リフレッシュトークン検証\nverify_refresh_token()
+    
+    alt トークン有効
+        AS -> DB: ユーザー情報取得\nget_by_id()
+        DB --> AS: user_data
+        
+        AS -> R: 古いリフレッシュトークン無効化\nrevoke_refresh_token()
+        AS -> R: 古いアクセストークンをブラックリスト登録\nblacklist_token()
+        
+        AS -> AS: 新しいアクセストークン生成\ncreate_access_token()
+        AS -> R: 新しいリフレッシュトークン生成\ncreate_refresh_token()
+        
+        AS --> C: 200 OK\n{access_token, refresh_token, token_type}
+    else トークン無効
+        AS --> C: 401 Unauthorized\n{detail: "無効なトークン"}
+    end
+end
+
+' ========================================
+' 4. ログアウトフロー
+' ========================================
+
+group ログアウトフロー
+    participant Client as C
+    participant AuthService as AS
+    participant Redis as R
+
+    C -> AS: POST /auth/logout\n{access_token, refresh_token}
+    
+    AS -> R: リフレッシュトークン無効化\nrevoke_refresh_token()
+    AS -> R: アクセストークンをブラックリスト登録\nblacklist_token()
+    
+    alt 両方のトークン無効化成功
+        AS --> C: 200 OK\n{detail: "ログアウト完了"}
+    else 無効化失敗
+        AS --> C: 400 Bad Request\n{detail: "ログアウト失敗"}
+    end
+end
+
+' ========================================
+' 5. 認証が必要なエンドポイントへのアクセス
+' ========================================
+
+group 認証が必要なエンドポイント
+    participant Client as C
+    participant AuthService as AS
+    participant Redis as R
+    participant Database as DB
+
+    C -> AS: GET /auth/me\nAuthorization: Bearer <token>
+    
+    note over AS: JWT トークンデコード\ntoken validation
+    
+    AS -> R: トークンブラックリスト確認\ncheck_blacklist()
+    
+    alt トークン有効
+        AS -> DB: ユーザー情報取得\nget_by_id()
+        DB --> AS: user_data
+        
+        AS --> C: 200 OK\n{id, username, email, user_id}
+    else トークン無効
+        AS --> C: 401 Unauthorized\n{detail: "認証が必要"}
+    end
+end
+
+' ========================================
+' 6. パスワード変更フロー
+' ========================================
+
+group パスワード変更フロー
+    participant Client as C
+    participant AuthService as AS
+    participant Database as DB
+    participant RabbitMQ as MQ
+
+    C -> AS: POST /auth/password/change\nAuthorization: Bearer <token>\n{current_password, new_password}
+    
+    note over AS: 認証チェック\n(Bearer Token)
+    
+    AS -> DB: 現在のパスワード検証\nupdate_password()
+    
+    alt パスワード変更成功
+        DB --> AS: 更新完了
+        AS -> MQ: パスワード変更イベント発行\npublish_password_changed()
+        
+        AS --> C: 200 OK\n{detail: "パスワード変更完了"}
+    else 現在のパスワード不正
+        AS --> C: 400 Bad Request\n{detail: "現在のパスワードが不正"}
+    end
+end
+
+' ========================================
+' 7. ユーザー情報更新（内部API）
+' ========================================
+
+group ユーザー情報更新（内部API）
+    participant OtherService as OS
+    participant AuthService as AS
+    participant Database as DB
+    participant RabbitMQ as MQ
+
+    OS -> AS: PUT /auth/update_user/{auth_user_id}\n{username, email, user_id}
+    
+    AS -> DB: ユーザー情報更新\nupdate_by_id()
+    
+    alt 更新成功
+        DB --> AS: 更新されたユーザー情報
+        AS -> MQ: ユーザー更新イベント発行\npublish_user_updated()
+        
+        AS --> OS: 200 OK\n{id, username, email, user_id}
+    else ユーザーが見つからない
+        AS --> OS: 404 Not Found\n{detail: "User not found"}
+    else ユーザー名重複
+        AS --> OS: 400 Bad Request\n{detail: "Username already exists"}
+    end
+end
+
+@enduml
